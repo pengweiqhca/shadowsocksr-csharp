@@ -28,9 +28,9 @@ namespace Shadowsocks.View
         }
 
         private ShadowsocksController controller;
-        //private ContextMenu contextMenu1;
-        private MenuItem topmostItem;
-        private MenuItem clearItem;
+        //private ContextMenuStrip contextMenu1;
+        private System.Windows.Forms.ToolStripMenuItem topmostItem;
+        private System.Windows.Forms.ToolStripMenuItem clearItem;
         private List<int> listOrder = new List<int>();
         private int lastRefreshIndex = 0;
         private bool firstDispley = true;
@@ -80,24 +80,25 @@ namespace Shadowsocks.View
             UpdateTexts();
             UpdateLog();
 
-            this.Menu = new MainMenu(new MenuItem[] {
-                CreateMenuGroup("&Control", new MenuItem[] {
+            this.MainMenuStrip = new MenuStrip();
+            this.MainMenuStrip.Items.AddRange(new ToolStripMenuItem[] {
+                CreateMenuGroup("&Control", new ToolStripMenuItem[] {
                     CreateMenuItem("&Disconnect direct connections", new EventHandler(this.DisconnectForward_Click)),
                     CreateMenuItem("Disconnect &All", new EventHandler(this.Disconnect_Click)),
-                    new MenuItem("-"),
+                    new ToolStripMenuItem("-"),
                     CreateMenuItem("Clear &MaxSpeed", new EventHandler(this.ClearMaxSpeed_Click)),
                     clearItem = CreateMenuItem("&Clear", new EventHandler(this.ClearItem_Click)),
-                    new MenuItem("-"),
+                    new ToolStripMenuItem("-"),
                     CreateMenuItem("Clear &Selected Total", new EventHandler(this.ClearSelectedTotal_Click)),
                     CreateMenuItem("Clear &Total", new EventHandler(this.ClearTotal_Click)),
                 }),
-                CreateMenuGroup("Port &out", new MenuItem[] {
+                CreateMenuGroup("Port &out", new ToolStripMenuItem[] {
                     CreateMenuItem("Copy current link", new EventHandler(this.copyLinkItem_Click)),
                     CreateMenuItem("Copy current group links", new EventHandler(this.copyGroupLinkItem_Click)),
                     CreateMenuItem("Copy all enable links", new EventHandler(this.copyEnableLinksItem_Click)),
                     CreateMenuItem("Copy all links", new EventHandler(this.copyLinksItem_Click)),
                 }),
-                CreateMenuGroup("&Window", new MenuItem[] {
+                CreateMenuGroup("&Window", new ToolStripMenuItem[] {
                     CreateMenuItem("Auto &size", new EventHandler(this.autosizeItem_Click)),
                     this.topmostItem = CreateMenuItem("Always On &Top", new EventHandler(this.topmostItem_Click)),
                 }),
@@ -121,14 +122,14 @@ namespace Shadowsocks.View
             this.Width = width + SystemInformation.VerticalScrollBarWidth + (this.Width - this.ClientSize.Width) + 1;
             ServerDataGrid.AutoResizeColumnHeadersHeight();
         }
-        private MenuItem CreateMenuGroup(string text, MenuItem[] items)
+        private System.Windows.Forms.ToolStripMenuItem CreateMenuGroup(string text, ToolStripMenuItem[] items)
         {
-            return new MenuItem(I18N.GetString(text), items);
+            return new ToolStripMenuItem(I18N.GetString(text), null, items);
         }
 
-        private MenuItem CreateMenuItem(string text, EventHandler click)
+        private System.Windows.Forms.ToolStripMenuItem CreateMenuItem(string text, EventHandler click)
         {
-            return new MenuItem(I18N.GetString(text), click);
+            return new ToolStripMenuItem(I18N.GetString(text), null, click);
         }
 
         private void UpdateTitle()
