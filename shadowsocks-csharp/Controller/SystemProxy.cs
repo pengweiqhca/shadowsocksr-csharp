@@ -502,14 +502,9 @@ namespace Shadowsocks.Controller
             // we are building x86 binary for both x86 and x64, which will
             // cause problem when opening registry key
             // detect operating system instead of CPU
-#if _DOTNET_4_0
             RegistryKey userKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, "",
                 Environment.Is64BitOperatingSystem ? RegistryView.Registry64 : RegistryView.Registry32
                 ).OpenSubKey(name, writable);
-#else
-            RegistryKey userKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, ""
-                ).OpenSubKey(name, writable);
-#endif
             return userKey;
         }
 
