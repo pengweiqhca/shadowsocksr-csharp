@@ -8,7 +8,7 @@ using System.Windows.Forms;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-
+using Timer = System.Windows.Forms.Timer;
 
 namespace Shadowsocks.View
 {

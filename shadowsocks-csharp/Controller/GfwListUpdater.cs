@@ -44,17 +44,18 @@ namespace Shadowsocks.Controller
             }
         }
 
-        private void http_DownloadGFWTemplateCompleted(object sender, DownloadStringCompletedEventArgs e)
+        private async Task http_DownloadGFWTemplateCompleted(Task<string> task)
         {
             try
             {
-                string result = e.Result;
+                var result = await task;
+
                 if (result.IndexOf("__RULES__") > 0 && result.IndexOf("FindProxyForURL") > 0)
                 {
                     gfwlist_template = result;
                     if (lastConfig != null)
                     {
-                        UpdatePACFromGFWList(lastConfig);
+                        await UpdatePACFromGFWList(lastConfig);
                     }
                     lastConfig = null;
                 }
@@ -72,11 +73,13 @@ namespace Shadowsocks.Controller
             }
         }
 
-        private void http_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        private async Task http_DownloadStringCompleted(HttpClient http, Task<string> task, bool isBackupRequest)
         {
             try
             {
-                List<string> lines = ParseResult(e.Result);
+                var result = await task;
+
+                List<string> lines = ParseResult(result);
                 if (lines.Count == 0)
                 {
                     throw new Exception("Empty GFWList");
@@ -84,8 +87,11 @@ namespace Shadowsocks.Controller
                 if (File.Exists(USER_RULE_FILE))
                 {
                     string local = File.ReadAllText(USER_RULE_FILE, Encoding.UTF8);
-                    string[] rules = local.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach(string rule in rules)
+                    string[] rules = local.Split(new char[]
+                    {
+                        '\r', '\n'
+                    }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string rule in rules)
                     {
                         if (rule.StartsWith("!") || rule.StartsWith("["))
                             continue;
@@ -123,32 +129,24 @@ namespace Shadowsocks.Controller
             {
                 if (Error != null)
                 {
-                    WebClient http = sender as WebClient;
-                    if (http.BaseAddress.StartsWith(GFWLIST_URL))
+                    if (!isBackupRequest)
                     {
-                        http.BaseAddress = GFWLIST_BACKUP_URL;
-                        http.DownloadStringAsync(new Uri(GFWLIST_BACKUP_URL + "?rnd=" + Util.Utils.RandUInt32().ToString()));
+                        await http_DownloadStringCompleted(http, http.GetStringAsync(GFWLIST_BACKUP_URL + "?rnd=" + Utils.RandUInt32()), true);
                     }
                     else
                     {
-                        if (e.Error != null)
-                        {
-                            Error(this, new ErrorEventArgs(e.Error));
-                        }
-                        else
-                        {
-                            Error(this, new ErrorEventArgs(ex));
-                        }
+                        Error(this, new ErrorEventArgs(ex));
                     }
                 }
             }
         }
 
-        private void http_DownloadPACCompleted(object sender, DownloadStringCompletedEventArgs e)
+        private async Task http_DownloadPACCompleted(Task<string> task)
         {
             try
             {
-                string content = e.Result;
+                var content = await task;
+
                 if (File.Exists(PAC_FILE))
                 {
                     string original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
@@ -176,59 +174,68 @@ namespace Shadowsocks.Controller
 
         }
 
-        public void UpdatePACFromGFWList(Configuration config)
+        public async Task UpdatePACFromGFWList(Configuration config)
         {
             if (gfwlist_template == null)
             {
                 lastConfig = config;
-                WebClient http = new WebClient();
-                http.Headers.Add("User-Agent",
-                    String.IsNullOrEmpty(config.proxyUserAgent) ?
-                    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
-                    : config.proxyUserAgent);
+
                 WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
                 if (!string.IsNullOrEmpty(config.authPass))
                 {
                     proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
                 }
-                http.Proxy = proxy;
-                http.DownloadStringCompleted += http_DownloadGFWTemplateCompleted;
-                http.DownloadStringAsync(new Uri(GFWLIST_TEMPLATE_URL + "?rnd=" + Util.Utils.RandUInt32().ToString()));
+                using var http = new HttpClient(new HttpClientHandler
+                {
+                    Proxy = proxy,
+                    UseProxy = true,
+                });
+                http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                    String.IsNullOrEmpty(config.proxyUserAgent) ?
+                    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
+                    : config.proxyUserAgent);
+
+                await http_DownloadGFWTemplateCompleted(http.GetStringAsync(GFWLIST_TEMPLATE_URL + "?rnd=" + Util.Utils.RandUInt32()));
             }
             else
             {
-                WebClient http = new WebClient();
-                http.Headers.Add("User-Agent",
-                    String.IsNullOrEmpty(config.proxyUserAgent) ?
-                    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
-                    : config.proxyUserAgent);
                 WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
                 if (!string.IsNullOrEmpty(config.authPass))
                 {
                     proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
                 }
-                http.Proxy = proxy;
-                http.BaseAddress = GFWLIST_URL;
-                http.DownloadStringCompleted += http_DownloadStringCompleted;
-                http.DownloadStringAsync(new Uri(GFWLIST_URL + "?rnd=" + Util.Utils.RandUInt32().ToString()));
+                using var http = new HttpClient(new HttpClientHandler
+                {
+                    Proxy = proxy,
+                    UseProxy = true,
+                });
+                http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                    String.IsNullOrEmpty(config.proxyUserAgent) ?
+                    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
+                    : config.proxyUserAgent);
+
+                await http_DownloadStringCompleted(http, http.GetStringAsync(GFWLIST_URL + "?rnd=" + Utils.RandUInt32()), false);
             }
         }
 
-        public void UpdatePACFromGFWList(Configuration config, string url)
+        public async void UpdatePACFromGFWList(Configuration config, string url)
         {
-            WebClient http = new WebClient();
-            http.Headers.Add("User-Agent",
-                String.IsNullOrEmpty(config.proxyUserAgent) ?
-                "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
-                : config.proxyUserAgent);
             WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
             if (!string.IsNullOrEmpty(config.authPass))
             {
                 proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
             }
-            http.Proxy = proxy;
-            http.DownloadStringCompleted += http_DownloadPACCompleted;
-            http.DownloadStringAsync(new Uri(url + "?rnd=" + Util.Utils.RandUInt32().ToString()));
+            using var http = new HttpClient(new HttpClientHandler
+            {
+                Proxy = proxy,
+                UseProxy = true,
+            });
+            http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+            String.IsNullOrEmpty(config.proxyUserAgent) ?
+                "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
+                : config.proxyUserAgent);
+
+            await http_DownloadPACCompleted(http.GetStringAsync(url + "?rnd=" + Util.Utils.RandUInt32()));
         }
 
         public List<string> ParseResult(string response)

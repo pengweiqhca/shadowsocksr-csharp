@@ -22,18 +22,13 @@ namespace Shadowsocks.Controller
 
         public const string Name = "ShadowsocksR";
 
-        public void CheckUpdate(Configuration config, ServerSubscribe subscribeTask, bool use_proxy, bool noitify)
+        public async void CheckUpdate(Configuration config, ServerSubscribe subscribeTask, bool use_proxy, bool noitify)
         {
             FreeNodeResult = null;
             this.noitify = noitify;
             try
             {
-                WebClient http = new WebClient();
-                http.Headers.Add("User-Agent",
-                    String.IsNullOrEmpty(config.proxyUserAgent) ?
-                    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
-                    : config.proxyUserAgent);
-                http.QueryString["rnd"] = Util.Utils.RandUInt32().ToString();
+                HttpClient http;
                 if (use_proxy)
                 {
                     WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
@@ -41,24 +36,30 @@ namespace Shadowsocks.Controller
                     {
                         proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
                     }
-                    http.Proxy = proxy;
-                }
-                else
-                {
-                    http.Proxy = null;
-                }
-                //UseProxy = !UseProxy;
-                this.subscribeTask = subscribeTask;
-                string URL = subscribeTask.URL;
-                
-                //add support for tls1.2+
-                if (URL.StartsWith("https", StringComparison.OrdinalIgnoreCase))
-                {
-                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | (SecurityProtocolType)3072 | SecurityProtocolType.Tls;
-                }
 
-                http.DownloadStringCompleted += http_DownloadStringCompleted;
-                http.DownloadStringAsync(new Uri(URL != null ? URL : UpdateURL));
+                    http = new HttpClient(new HttpClientHandler
+                    {
+                        Proxy = proxy,
+                        UseProxy = true,
+                    });
+                }
+                else http = new HttpClient();
+
+                http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+                    String.IsNullOrEmpty(config.proxyUserAgent) ?
+                    "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
+                    : config.proxyUserAgent);
+
+
+                this.subscribeTask = subscribeTask;
+                string URL = subscribeTask.URL ?? UpdateURL;
+                if (!URL.Contains('?')) URL += '?';
+                if (!URL.EndsWith("?") && !URL.EndsWith("&")) URL += '&';
+
+                URL += "rnd=" + Util.Utils.RandUInt32();
+
+                using (http)
+                    await http_DownloadStringCompleted(http.GetStringAsync(URL));
             }
             catch (Exception e)
             {
@@ -66,12 +67,11 @@ namespace Shadowsocks.Controller
             }
         }
 
-        private void http_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        private async Task http_DownloadStringCompleted(Task<string> task)
         {
             try
             {
-                string response = e.Result;
-                FreeNodeResult = response;
+                FreeNodeResult = await task;
 
                 if (NewFreeNodeFound != null)
                 {
@@ -80,10 +80,6 @@ namespace Shadowsocks.Controller
             }
             catch (Exception ex)
             {
-                if (e.Error != null)
-                {
-                    Logging.Debug(e.Error.ToString());
-                }
                 Logging.Debug(ex.ToString());
                 if (NewFreeNodeFound != null)
                 {

@@ -26,7 +26,7 @@ namespace Shadowsocks.Obfs
 
         protected bool has_sent_header;
         protected bool has_recv_header;
-        protected static RNGCryptoServiceProvider g_random = new RNGCryptoServiceProvider();
+        protected static RandomNumberGenerator g_random = RandomNumberGenerator.Create();
 
         public static List<string> SupportedObfs()
         {
@@ -199,7 +199,7 @@ namespace Shadowsocks.Obfs
 
         protected bool has_sent_header;
         protected bool has_recv_header;
-        protected static RNGCryptoServiceProvider g_random = new RNGCryptoServiceProvider();
+        protected static RandomNumberGenerator g_random = RandomNumberGenerator.Create();
 
         public static List<string> SupportedObfs()
         {
@@ -422,7 +422,7 @@ namespace Shadowsocks.Obfs
 
         protected bool has_sent_header;
         protected bool has_recv_header;
-        protected static RNGCryptoServiceProvider g_random = new RNGCryptoServiceProvider();
+        protected static RandomNumberGenerator g_random = RandomNumberGenerator.Create();
         protected const string SALT = "auth_sha1_v4";
         protected const int overhead = 9;
 
@@ -682,7 +682,7 @@ namespace Shadowsocks.Obfs
 
         protected bool has_sent_header;
         protected bool has_recv_header;
-        protected static RNGCryptoServiceProvider g_random = new RNGCryptoServiceProvider();
+        protected static RandomNumberGenerator g_random = RandomNumberGenerator.Create();
         protected string SALT;
 
         protected uint pack_id;
@@ -1034,7 +1034,7 @@ namespace Shadowsocks.Obfs
             }
             const int unit_len = 8100;
             int ogn_datalength = datalength;
-            if (datalength < 0 || last != null && (now - last).TotalSeconds > 3)
+            if (datalength < 0 || (now - last).TotalSeconds > 3)
             {
                 Sync();
             }

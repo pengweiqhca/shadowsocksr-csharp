@@ -90,16 +90,14 @@ namespace Shadowsocks.Util
         public static void RandBytes(byte[] buf, int length)
         {
             byte[] temp = new byte[length];
-            RNGCryptoServiceProvider rngServiceProvider = new RNGCryptoServiceProvider();
-            rngServiceProvider.GetBytes(temp);
+            RandomNumberGenerator.Create().GetBytes(temp);
             temp.CopyTo(buf, 0);
         }
 
         public static UInt32 RandUInt32()
         {
             byte[] temp = new byte[4];
-            RNGCryptoServiceProvider rngServiceProvider = new RNGCryptoServiceProvider();
-            rngServiceProvider.GetBytes(temp);
+            RandomNumberGenerator.Create().GetBytes(temp);
             return BitConverter.ToUInt32(temp, 0);
         }
 

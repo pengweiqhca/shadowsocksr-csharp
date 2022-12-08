@@ -434,7 +434,7 @@ namespace Shadowsocks.Controller
                 }
                 else
                 {
-                    if (lastTimerSetTime != null && (DateTime.Now - lastTimerSetTime).TotalMilliseconds > 500)
+                    if ((DateTime.Now - lastTimerSetTime).TotalMilliseconds > 500)
                     {
                         lock (timerLock)
                         {

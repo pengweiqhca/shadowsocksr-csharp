@@ -287,7 +287,7 @@ namespace Shadowsocks.Obfs
         private uint send_id = 0;
         private bool fastauth = false;
 
-        protected static RNGCryptoServiceProvider g_random = new RNGCryptoServiceProvider();
+        protected static RandomNumberGenerator g_random = RandomNumberGenerator.Create();
         protected Random random = new Random();
         protected const int overhead = 5;
 

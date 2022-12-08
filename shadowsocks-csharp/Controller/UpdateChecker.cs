@@ -42,15 +42,11 @@ namespace Shadowsocks.Controller
 
         private static bool UseProxy = true;
 
-        public void CheckUpdate(Configuration config)
+        public async void CheckUpdate(Configuration config)
         {
             try
             {
-                WebClient http = new WebClient();
-                http.Headers.Add("User-Agent",
-                String.IsNullOrEmpty(config.proxyUserAgent) ?
-                "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
-                : config.proxyUserAgent);
+                HttpClient http;
                 if (UseProxy)
                 {
                     WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
@@ -58,15 +54,21 @@ namespace Shadowsocks.Controller
                     {
                         proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
                     }
-                    http.Proxy = proxy;
+
+                    http = new HttpClient(new HttpClientHandler
+                    {
+                        Proxy = proxy,
+                        UseProxy = true,
+                    });
                 }
-                else
-                {
-                    http.Proxy = null;
-                }
-                //UseProxy = !UseProxy;
-                http.DownloadStringCompleted += http_DownloadStringCompleted;
-                http.DownloadStringAsync(new Uri(UpdateURL + "?rnd=" + Util.Utils.RandUInt32().ToString()));
+                else http = new HttpClient();
+                http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
+            String.IsNullOrEmpty(config.proxyUserAgent) ?
+                "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
+                : config.proxyUserAgent);
+
+                using (http)
+                    await http_DownloadStringCompleted(http.GetStringAsync(UpdateURL + "?rnd=" + Util.Utils.RandUInt32()));
             }
             catch (Exception e)
             {
@@ -92,7 +94,7 @@ namespace Shadowsocks.Controller
 
         public class VersionComparer : IComparer<string>
         {
-            // Calls CaseInsensitiveComparer.Compare with the parameters reversed. 
+            // Calls CaseInsensitiveComparer.Compare with the parameters reversed.
             public int Compare(string x, string y)
             {
                 return CompareVersion(ParseVersionFromURL(x), ParseVersionFromURL(y));
@@ -164,11 +166,11 @@ namespace Shadowsocks.Controller
             return CompareVersion(version, currentVersion) > 0;
         }
 
-        private void http_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
+        private async Task http_DownloadStringCompleted(Task<string> task)
         {
             try
             {
-                string response = e.Result;
+                var response = await task;
 
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(response);
@@ -202,10 +204,6 @@ namespace Shadowsocks.Controller
             }
             catch (Exception ex)
             {
-                if (e.Error != null)
-                {
-                    Logging.Debug(e.Error.ToString());
-                }
                 Logging.Debug(ex.ToString());
                 if (NewVersionFound != null)
                 {

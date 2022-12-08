@@ -32,7 +32,7 @@ namespace Shadowsocks.Obfs
 
         protected bool has_sent_header;
         protected bool has_recv_header;
-        protected static RNGCryptoServiceProvider g_random = new RNGCryptoServiceProvider();
+        protected static RandomNumberGenerator g_random = RandomNumberGenerator.Create();
         protected string SALT;
 
         protected uint pack_id;

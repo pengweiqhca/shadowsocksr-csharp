@@ -720,6 +720,7 @@ namespace Shadowsocks.View
                 }
             }
             {
+                var index = 0;
                 foreach (KeyValuePair<string, ToolStripMenuItem> pair in group)
                 {
                     if (pair.Key == def_group)
@@ -734,7 +735,7 @@ namespace Shadowsocks.View
                     {
                         pair.Value.Text = "　" + pair.Value.Text;
                     }
-                    items.Add(pair.Value);
+                    items.Insert(index++, pair.Value);
                 }
             }
         }

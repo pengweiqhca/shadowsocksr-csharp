@@ -258,7 +258,7 @@ namespace Shadowsocks.Controller
             }
             else if (!closed)
             {
-                if (lastTimerSetTime != null && (DateTime.Now - lastTimerSetTime).TotalMilliseconds > 500)
+                if ((DateTime.Now - lastTimerSetTime).TotalMilliseconds > 500)
                 {
                     lock (timerLock)
                     {
@@ -1378,9 +1378,7 @@ namespace Shadowsocks.Controller
                     int bytesRecv = remote.GetAsyncResultSize(ar);
                     if (speedTester.BeginDownload())
                     {
-                        int pingTime = -1;
-                        if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
-                            pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
+                        int pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
@@ -1466,9 +1464,7 @@ namespace Shadowsocks.Controller
                     }
                     if (speedTester.BeginDownload())
                     {
-                        int pingTime = -1;
-                        if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
-                            pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
+                        int pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
@@ -1556,9 +1552,7 @@ namespace Shadowsocks.Controller
                     int bytesRecv = remoteUDP.GetAsyncResultSize(ar);
                     if (speedTester.BeginDownload())
                     {
-                        int pingTime = -1;
-                        if (speedTester.timeBeginDownload != null && speedTester.timeBeginUpload != null)
-                            pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
+                        int pingTime = (int)(speedTester.timeBeginDownload - speedTester.timeBeginUpload).TotalMilliseconds;
                         if (pingTime >= 0)
                             server.ServerSpeedLog().AddConnectTime(pingTime);
                     }
@@ -1606,7 +1600,7 @@ namespace Shadowsocks.Controller
                     ResetTimeout(cfg.connect_timeout <= 0 ? 30 : cfg.connect_timeout, false);
                 total_len += send_len;
 
-                if (lastKeepTime == null || (DateTime.Now - lastKeepTime).TotalSeconds > 5)
+                if ((DateTime.Now - lastKeepTime).TotalSeconds > 5)
                 {
                     if (keepCurrentServer != null)
                     {
@@ -1697,7 +1691,7 @@ namespace Shadowsocks.Controller
                         ResetTimeout(cfg.TTL);
                     }
                     int send_len = RemoteSend(connetionRecvBuffer, bytesRead);
-                    if (!( send_len == 0 && bytesRead > 0) )
+                    if (!(send_len == 0 && bytesRead > 0))
                         doConnectionRecv();
                 }
                 else

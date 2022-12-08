@@ -22,7 +22,6 @@ namespace Shadowsocks.Model
         public bool force_expired;
          public bool isExpired(string host)
         {
-            if (updateTime == null) return true;
             if (this.host != host) return true;
             if (force_expired && (DateTime.Now - updateTime).TotalMinutes > 1) return true;
             return (DateTime.Now - updateTime).TotalMinutes > 30;
