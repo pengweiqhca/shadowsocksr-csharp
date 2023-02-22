@@ -24,21 +24,22 @@ namespace Shadowsocks.Encryption
 
         public static void InitAviable()
         {
-            List<string> remove_ciphers = new List<string>();
-            foreach (string cipher in _ciphers.Keys)
+            var remove_ciphers = new List<string>();
+            foreach (var cipher in _ciphers.Keys)
             {
                 if (!Libcrypto.is_cipher(cipher))
                 {
                     remove_ciphers.Add(cipher);
                 }
             }
-            foreach (string cipher in remove_ciphers)
+            foreach (var cipher in remove_ciphers)
             {
                 _ciphers.Remove(cipher);
             }
         }
 
-        private static Dictionary<string, EncryptorInfo> _ciphers = new Dictionary<string, EncryptorInfo> {
+        private static readonly Dictionary<string, EncryptorInfo> _ciphers = new()
+        {
                 {"aes-128-cbc", new EncryptorInfo(16, 16, false, CIPHER_AES)},
                 {"aes-192-cbc", new EncryptorInfo(24, 16, false, CIPHER_AES)},
                 {"aes-256-cbc", new EncryptorInfo(32, 16, false, CIPHER_AES)},
@@ -70,20 +71,11 @@ namespace Shadowsocks.Encryption
                 {"seed-cfb", new EncryptorInfo(16, 16, false, CIPHER_OTHER_CFB)},
         };
 
-        public static List<string> SupportedCiphers()
-        {
-            return new List<string>(_ciphers.Keys);
-        }
+        public static List<string> SupportedCiphers() => new(_ciphers.Keys);
 
-        public static bool isSupport()
-        {
-            return Libcrypto.isSupport();
-        }
+        public static bool isSupport() => Libcrypto.isSupport();
 
-        protected override Dictionary<string, EncryptorInfo> getCiphers()
-        {
-            return _ciphers;
-        }
+        protected override Dictionary<string, EncryptorInfo> getCiphers() => _ciphers;
 
         protected override void initCipher(byte[] iv, bool isCipher)
         {
@@ -93,7 +85,7 @@ namespace Shadowsocks.Encryption
             byte[] realkey;
             if (_method.StartsWith("rc4-md5"))
             {
-                byte[] temp = new byte[keyLen + ivLen];
+                var temp = new byte[keyLen + ivLen];
                 realkey = new byte[keyLen];
                 Array.Copy(_key, 0, temp, 0, keyLen);
                 Array.Copy(iv, 0, temp, keyLen, ivLen);
@@ -132,9 +124,9 @@ namespace Shadowsocks.Encryption
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(this.ToString());
+                throw new ObjectDisposedException(ToString());
             }
-            int len = Libcrypto.update(isCipher ? _encryptCtx : _decryptCtx, buf, length, outbuf);
+            var len = Libcrypto.update(isCipher ? _encryptCtx : _decryptCtx, buf, length, outbuf);
         }
 
         #region IDisposable

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shadowsocks.Model;
 using Shadowsocks.Util;
+using System;
+using System.Collections.Generic;
 
 namespace test
 {
@@ -12,8 +12,8 @@ namespace test
         [TestMethod]
         public void TestServerFromSSR()
         {
-            Server server = new Server();
-            string nornameCase = "ssr://MTI3LjAuMC4xOjEyMzQ6YXV0aF9hZXMxMjhfbWQ1OmFlcy0xMjgtY2ZiOnRsczEuMl90aWNrZXRfYXV0aDpZV0ZoWW1KaS8_b2Jmc3BhcmFtPVluSmxZV3QzWVRFeExtMXZaUQ";
+            var server = new Server();
+            var nornameCase = "ssr://MTI3LjAuMC4xOjEyMzQ6YXV0aF9hZXMxMjhfbWQ1OmFlcy0xMjgtY2ZiOnRsczEuMl90aWNrZXRfYXV0aDpZV0ZoWW1KaS8_b2Jmc3BhcmFtPVluSmxZV3QzWVRFeExtMXZaUQ";
 
             server.ServerFromSSR(nornameCase, "");
 
@@ -26,7 +26,7 @@ namespace test
             Assert.AreEqual<string>(server.password, "aaabbb");
 
             server = new Server();
-            string normalCaseWithRemark = "ssr://MTI3LjAuMC4xOjEyMzQ6YXV0aF9hZXMxMjhfbWQ1OmFlcy0xMjgtY2ZiOnRsczEuMl90aWNrZXRfYXV0aDpZV0ZoWW1KaS8_b2Jmc3BhcmFtPVluSmxZV3QzWVRFeExtMXZaUSZyZW1hcmtzPTVyV0w2Sy1WNUxpdDVwYUg";
+            var normalCaseWithRemark = "ssr://MTI3LjAuMC4xOjEyMzQ6YXV0aF9hZXMxMjhfbWQ1OmFlcy0xMjgtY2ZiOnRsczEuMl90aWNrZXRfYXV0aDpZV0ZoWW1KaS8_b2Jmc3BhcmFtPVluSmxZV3QzWVRFeExtMXZaUSZyZW1hcmtzPTVyV0w2Sy1WNUxpdDVwYUg";
 
             server.ServerFromSSR(normalCaseWithRemark, "firewallAirport");
 
@@ -45,15 +45,25 @@ namespace test
         [TestMethod]
         public void TestHideServerName()
         {
-            Dictionary<string, string> addrs = new Dictionary<string, string>();
-            addrs.Add("127.0.0.1", "127.**.1");
-            addrs.Add("2001:db8:85a3:8d3:1319:8a2e:370:7348", "2001:**:7348");
-            addrs.Add("::1319:8a2e:370:7348", "**:7348");
-            addrs.Add("::1", "**:1");
-
-            foreach (string key in addrs.Keys)
+            var addrs = new Dictionary<string, string>
             {
-                string val = ServerName.HideServerAddr(key);
+                {
+                    "127.0.0.1", "127.**.1"
+                },
+                {
+                    "2001:db8:85a3:8d3:1319:8a2e:370:7348", "2001:**:7348"
+                },
+                {
+                    "::1319:8a2e:370:7348", "**:7348"
+                },
+                {
+                    "::1", "**:1"
+                }
+            };
+
+            foreach (var key in addrs.Keys)
+            {
+                var val = ServerName.HideServerAddr(key);
                 Assert.AreEqual(addrs[key], val);
             }
         }
@@ -61,12 +71,14 @@ namespace test
         [TestMethod]
         public void TestBadPortNumber()
         {
-            Server server = new Server();
+            var server = new Server();
 
-            string link = "ssr://MTI3LjAuMC4xOjgwOmF1dGhfc2hhMV92NDpjaGFjaGEyMDpodHRwX3NpbXBsZTplaWZnYmVpd3ViZ3IvP29iZnNwYXJhbT0mcHJvdG9wYXJhbT0mcmVtYXJrcz0mZ3JvdXA9JnVkcHBvcnQ9NDY0MzgxMzYmdW90PTQ2MDA3MTI4";
-            try {
+            var link = "ssr://MTI3LjAuMC4xOjgwOmF1dGhfc2hhMV92NDpjaGFjaGEyMDpodHRwX3NpbXBsZTplaWZnYmVpd3ViZ3IvP29iZnNwYXJhbT0mcHJvdG9wYXJhbT0mcmVtYXJrcz0mZ3JvdXA9JnVkcHBvcnQ9NDY0MzgxMzYmdW90PTQ2MDA3MTI4";
+            try
+            {
                 server.ServerFromSSR(link, "");
-            } catch (System.OverflowException e)
+            }
+            catch (OverflowException e)
             {
                 Console.Write(e.ToString());
             }

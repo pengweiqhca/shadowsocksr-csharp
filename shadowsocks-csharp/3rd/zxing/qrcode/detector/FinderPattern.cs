@@ -27,13 +27,13 @@ namespace ZXing.QrCode.Internal
    public sealed class FinderPattern : ResultPoint
    {
       private readonly float estimatedModuleSize;
-      private int count;
+      private readonly int count;
 
       internal FinderPattern(float posX, float posY, float estimatedModuleSize)
          : this(posX, posY, estimatedModuleSize, 1)
       {
          this.estimatedModuleSize = estimatedModuleSize;
-         this.count = 1;
+         count = 1;
       }
 
       internal FinderPattern(float posX, float posY, float estimatedModuleSize, int count)
@@ -51,18 +51,12 @@ namespace ZXing.QrCode.Internal
       /// </value>
       public float EstimatedModuleSize
       {
-         get
-         {
-            return estimatedModuleSize;
-         }
+         get => estimatedModuleSize;
       }
 
       internal int Count
       {
-         get
-         {
-            return count;
-         }
+         get => count;
       }
 
       /*
@@ -79,7 +73,7 @@ namespace ZXing.QrCode.Internal
       {
          if (Math.Abs(i - Y) <= moduleSize && Math.Abs(j - X) <= moduleSize)
          {
-            float moduleSizeDiff = Math.Abs(moduleSize - estimatedModuleSize);
+            var moduleSizeDiff = Math.Abs(moduleSize - estimatedModuleSize);
             return moduleSizeDiff <= 1.0f || moduleSizeDiff <= estimatedModuleSize;
 
          }
@@ -97,10 +91,10 @@ namespace ZXing.QrCode.Internal
       /// <returns></returns>
       internal FinderPattern combineEstimate(float i, float j, float newModuleSize)
       {
-         int combinedCount = count + 1;
-         float combinedX = (count * X + j) / combinedCount;
-         float combinedY = (count * Y + i) / combinedCount;
-         float combinedModuleSize = (count * estimatedModuleSize + newModuleSize) / combinedCount;
+         var combinedCount = count + 1;
+         var combinedX = (count * X + j) / combinedCount;
+         var combinedY = (count * Y + i) / combinedCount;
+         var combinedModuleSize = (count * estimatedModuleSize + newModuleSize) / combinedCount;
          return new FinderPattern(combinedX, combinedY, combinedModuleSize, combinedCount);
       }
    }

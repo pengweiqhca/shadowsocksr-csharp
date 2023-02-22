@@ -16,17 +16,17 @@ namespace Shadowsocks.Controller
     class HttpProxyRunner
     {
         private Process _process;
-        private static string runningPath;
+        private static readonly string runningPath;
         private int _runningPort;
-        private static string _subPath = @"temp";
-        private static string _exeNameNoExt = @"/ssr_privoxy";
-        private static string _exeName = @"/ssr_privoxy.exe";
+        private static readonly string _subPath = @"temp";
+        private static readonly string _exeNameNoExt = @"/ssr_privoxy";
+        private static readonly string _exeName = @"/ssr_privoxy.exe";
 
         static HttpProxyRunner()
         {
-            runningPath = Path.Combine(System.Windows.Forms.Application.StartupPath, _subPath);
-            _exeNameNoExt = System.IO.Path.GetFileNameWithoutExtension(Util.Utils.GetExecutablePath());
-            _exeName = @"/" + _exeNameNoExt + @".exe";
+            runningPath = Path.Combine(Application.StartupPath, _subPath);
+            _exeNameNoExt = Path.GetFileNameWithoutExtension(Util.Utils.GetExecutablePath());
+            _exeName = $@"/{_exeNameNoExt}.exe";
             if (!Directory.Exists(runningPath))
             {
                 Directory.CreateDirectory(runningPath);
@@ -35,7 +35,7 @@ namespace Shadowsocks.Controller
             try
             {
                 FileManager.UncompressFile(runningPath + _exeName, Resources.privoxy_exe);
-                FileManager.UncompressFile(runningPath + "/mgwz.dll", Resources.mgwz_dll);
+                FileManager.UncompressFile($"{runningPath}/mgwz.dll", Resources.mgwz_dll);
             }
             catch (IOException e)
             {
@@ -45,10 +45,7 @@ namespace Shadowsocks.Controller
 
         public int RunningPort
         {
-            get
-            {
-                return _runningPort;
-            }
+            get => _runningPort;
         }
 
         public bool HasExited()
@@ -67,8 +64,8 @@ namespace Shadowsocks.Controller
 
         public static void Kill()
         {
-            Process[] existingPolipo = Process.GetProcessesByName(_exeNameNoExt);
-            foreach (Process p in existingPolipo)
+            var existingPolipo = Process.GetProcessesByName(_exeNameNoExt);
+            foreach (var p in existingPolipo)
             {
                 string str;
                 try
@@ -99,13 +96,13 @@ namespace Shadowsocks.Controller
             if (_process == null)
             {
                 Kill();
-                string polipoConfig = Resources.privoxy_conf;
-                _runningPort = this.GetFreePort();
+                var polipoConfig = Resources.privoxy_conf;
+                _runningPort = GetFreePort();
                 polipoConfig = polipoConfig.Replace("__SOCKS_PORT__", configuration.localPort.ToString());
                 polipoConfig = polipoConfig.Replace("__PRIVOXY_BIND_PORT__", _runningPort.ToString());
                 polipoConfig = polipoConfig.Replace("__PRIVOXY_BIND_IP__", "127.0.0.1");
                 polipoConfig = polipoConfig.Replace("__BYPASS_ACTION__", "");
-                FileManager.ByteArrayToFile(runningPath + "/privoxy.conf", System.Text.Encoding.UTF8.GetBytes(polipoConfig));
+                FileManager.ByteArrayToFile($"{runningPath}/privoxy.conf", Encoding.UTF8.GetBytes(polipoConfig));
 
                 Restart();
             }
@@ -116,11 +113,11 @@ namespace Shadowsocks.Controller
             _process = new Process();
             // Configure the process using the StartInfo properties.
             _process.StartInfo.FileName = runningPath + _exeName;
-            _process.StartInfo.Arguments = " \"" + runningPath + "/privoxy.conf\"";
+            _process.StartInfo.Arguments = $" \"{runningPath}/privoxy.conf\"";
             _process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             _process.StartInfo.UseShellExecute = true;
             _process.StartInfo.CreateNoWindow = true;
-            _process.StartInfo.WorkingDirectory = System.Windows.Forms.Application.StartupPath;
+            _process.StartInfo.WorkingDirectory = Application.StartupPath;
             //_process.StartInfo.RedirectStandardOutput = true;
             //_process.StartInfo.RedirectStandardError = true;
             try
@@ -155,22 +152,22 @@ namespace Shadowsocks.Controller
 
         private int GetFreePort()
         {
-            int defaultPort = 60000;
+            var defaultPort = 60000;
             try
             {
-                IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
-                IPEndPoint[] tcpEndPoints = properties.GetActiveTcpListeners();
-                Random random = new Random(Util.Utils.GetExecutablePath().GetHashCode() ^ (int)DateTime.Now.Ticks);
+                var properties = IPGlobalProperties.GetIPGlobalProperties();
+                var tcpEndPoints = properties.GetActiveTcpListeners();
+                var random = new Random(Util.Utils.GetExecutablePath().GetHashCode() ^ (int)DateTime.Now.Ticks);
 
-                List<int> usedPorts = new List<int>();
-                foreach (IPEndPoint endPoint in IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners())
+                var usedPorts = new List<int>();
+                foreach (var endPoint in IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners())
                 {
                     usedPorts.Add(endPoint.Port);
                 }
 
-                for (int nTry = 0; nTry < 1000; nTry++)
+                for (var nTry = 0; nTry < 1000; nTry++)
                 {
-                    int port = random.Next(10000, 65536);
+                    var port = random.Next(10000, 65536);
                     if (!usedPorts.Contains(port))
                     {
                         return port;

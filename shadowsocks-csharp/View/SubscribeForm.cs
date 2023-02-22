@@ -13,17 +13,17 @@ namespace Shadowsocks.View
 {
     public partial class SubscribeForm : Form
     {
-        private ShadowsocksController controller;
+        private readonly ShadowsocksController controller;
         // this is a copy of configuration that we are working on
         private Configuration _modifiedConfiguration;
         private int _old_select_index;
 
         public SubscribeForm(ShadowsocksController controller)
         {
-            this.Font = System.Drawing.SystemFonts.MessageBoxFont;
+            Font = SystemFonts.MessageBoxFont;
             InitializeComponent();
 
-            this.Icon = Icon.FromHandle(Resources.ssw128.GetHicon());
+            Icon = Icon.FromHandle(Resources.ssw128.GetHicon());
             this.controller = controller;
 
             UpdateTexts();
@@ -34,7 +34,7 @@ namespace Shadowsocks.View
 
         private void UpdateTexts()
         {
-            this.Text = I18N.GetString("Subscribe Settings");
+            Text = I18N.GetString("Subscribe Settings");
             label1.Text = I18N.GetString("URL");
             label2.Text = I18N.GetString("Group name");
             checkBoxAutoUpdate.Text = I18N.GetString("Auto update");
@@ -69,7 +69,7 @@ namespace Shadowsocks.View
 
         private void LoadAllSettings()
         {
-            int select_index = 0;
+            var select_index = 0;
             checkBoxAutoUpdate.Checked = _modifiedConfiguration.nodeFeedAutoUpdate;
             UpdateList();
             UpdateSelected(select_index);
@@ -84,28 +84,28 @@ namespace Shadowsocks.View
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void buttonOK_Click(object sender, EventArgs e)
         {
-            int select_index = listServerSubscribe.SelectedIndex;
+            var select_index = listServerSubscribe.SelectedIndex;
             SaveSelected(select_index);
             if (SaveAllSettings() == -1)
             {
                 return;
             }
             controller.SaveServersConfig(_modifiedConfiguration);
-            this.Close();
+            Close();
         }
 
         private void UpdateList()
         {
             listServerSubscribe.Items.Clear();
-            for (int i = 0; i < _modifiedConfiguration.serverSubscribes.Count; ++i)
+            for (var i = 0; i < _modifiedConfiguration.serverSubscribes.Count; ++i)
             {
-                ServerSubscribe ss = _modifiedConfiguration.serverSubscribes[i];
-                listServerSubscribe.Items.Add((String.IsNullOrEmpty(ss.Group) ? "    " : ss.Group + " - ") + ss.URL);
+                var ss = _modifiedConfiguration.serverSubscribes[i];
+                listServerSubscribe.Items.Add((string.IsNullOrEmpty(ss.Group) ? "    " : $"{ss.Group} - ") + ss.URL);
             }
         }
 
@@ -121,15 +121,15 @@ namespace Shadowsocks.View
         {
             if (index >= 0 && index < _modifiedConfiguration.serverSubscribes.Count)
             {
-                ServerSubscribe ss = _modifiedConfiguration.serverSubscribes[index];
+                var ss = _modifiedConfiguration.serverSubscribes[index];
                 textBoxURL.Text = ss.URL;
                 textBoxGroup.Text = ss.Group;
                 _old_select_index = index;
                 if (ss.LastUpdateTime != 0)
                 {
-                    DateTime now = new DateTime(1970, 1, 1, 0, 0, 0);
+                    var now = new DateTime(1970, 1, 1, 0, 0, 0);
                     now = now.AddSeconds(ss.LastUpdateTime);
-                    textUpdate.Text = now.ToLongDateString() + " " + now.ToLongTimeString();
+                    textUpdate.Text = $"{now.ToLongDateString()} {now.ToLongTimeString()}";
                 }
                 else
                 {
@@ -142,7 +142,7 @@ namespace Shadowsocks.View
         {
             if (index >= 0 && index < _modifiedConfiguration.serverSubscribes.Count)
             {
-                ServerSubscribe ss = _modifiedConfiguration.serverSubscribes[index];
+                var ss = _modifiedConfiguration.serverSubscribes[index];
                 if (ss.URL != textBoxURL.Text)
                 {
                     ss.URL = textBoxURL.Text;
@@ -154,7 +154,7 @@ namespace Shadowsocks.View
 
         private void listServerSubscribe_SelectedIndexChanged(object sender, EventArgs e)
         {
-            int select_index = listServerSubscribe.SelectedIndex;
+            var select_index = listServerSubscribe.SelectedIndex;
             if (_old_select_index == select_index)
                 return;
 
@@ -167,7 +167,7 @@ namespace Shadowsocks.View
         private void buttonAdd_Click(object sender, EventArgs e)
         {
             SaveSelected(_old_select_index);
-            int select_index = _modifiedConfiguration.serverSubscribes.Count;
+            var select_index = _modifiedConfiguration.serverSubscribes.Count;
             if (_old_select_index >= 0 && _old_select_index < _modifiedConfiguration.serverSubscribes.Count)
             {
                 _modifiedConfiguration.serverSubscribes.Insert(select_index, new ServerSubscribe());
@@ -185,7 +185,7 @@ namespace Shadowsocks.View
 
         private void buttonDel_Click(object sender, EventArgs e)
         {
-            int select_index = listServerSubscribe.SelectedIndex;
+            var select_index = listServerSubscribe.SelectedIndex;
             if (select_index >= 0 && select_index < _modifiedConfiguration.serverSubscribes.Count)
             {
                 _modifiedConfiguration.serverSubscribes.RemoveAt(select_index);

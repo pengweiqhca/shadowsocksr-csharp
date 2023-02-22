@@ -46,8 +46,8 @@ namespace OpenDNS
 		{
 			public int Compare(object x, object y)
 			{
-				ResourceRecord first = (ResourceRecord) x;
-				ResourceRecord second = (ResourceRecord) y;
+				var first = (ResourceRecord) x;
+				var second = (ResourceRecord) y;
 				return first.Name.CompareTo(second.Name);
 			}
 		}
@@ -56,8 +56,8 @@ namespace OpenDNS
 		{
 			public int Compare(object x, object y)
 			{
-				ResourceRecord first = (ResourceRecord) x;
-				ResourceRecord second = (ResourceRecord) y;
+				var first = (ResourceRecord) x;
+				var second = (ResourceRecord) y;
 				return first.TimeToLive.CompareTo(second.TimeToLive);
 			}
 		}

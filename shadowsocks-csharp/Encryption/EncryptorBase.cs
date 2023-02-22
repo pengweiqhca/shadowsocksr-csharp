@@ -36,8 +36,8 @@ namespace Shadowsocks.Encryption
 
         protected byte[] GetPasswordHash()
         {
-            byte[] inputBytes = Encoding.UTF8.GetBytes(Password);
-            byte[] hash = MbedTLS.MD5(inputBytes);
+            var inputBytes = Encoding.UTF8.GetBytes(Password);
+            var hash = MbedTLS.MD5(inputBytes);
             return hash;
         }
         public abstract bool SetIV(byte[] iv);

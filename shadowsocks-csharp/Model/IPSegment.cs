@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections;
 
 namespace Shadowsocks.Model
 {
@@ -18,32 +15,31 @@ namespace Shadowsocks.Model
         }
 
         public IPAddressCmp(string ip)
-            : base(IPAddressCmp.FromString(ip).GetAddressBytes())
+            : base(FromString(ip).GetAddressBytes())
         {
         }
 
         public static System.Net.IPAddress FromString(string ip)
         {
-            System.Net.IPAddress addr = null;
-            TryParse(ip, out addr);
+            TryParse(ip, out var addr);
             return addr;
         }
 
         public int CompareTo(object obj)
         {
-            byte[] b1 = GetAddressBytes();
-            byte[] b2 = (obj as IPAddressCmp).GetAddressBytes();
-            int len = Math.Min(b1.Length, b2.Length);
-            for (int i = 0; i < b1.Length; ++i)
+            var b1 = GetAddressBytes();
+            var b2 = (obj as IPAddressCmp).GetAddressBytes();
+            var len = Math.Min(b1.Length, b2.Length);
+            for (var i = 0; i < b1.Length; ++i)
             {
                 if (b1[i] < b2[i])
                     return -1;
-                else if (b1[i] > b2[i])
+                if (b1[i] > b2[i])
                     return 1;
             }
             if (b1.Length < b2.Length)
                 return -1;
-            else if (b1.Length > b2.Length)
+            if (b1.Length > b2.Length)
                 return 1;
             return 0;
         }
@@ -52,16 +48,16 @@ namespace Shadowsocks.Model
         {
             if (AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
                 return this;
-            byte[] b1 = GetAddressBytes();
-            byte[] br = new byte[16] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0};
+            var b1 = GetAddressBytes();
+            var br = new byte[16] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0 };
             b1.CopyTo(br, 12);
             return new IPAddressCmp(br);
         }
 
         public IPAddressCmp Inc()
         {
-            byte[] b = GetAddressBytes();
-            int i = b.Length - 1;
+            var b = GetAddressBytes();
+            var i = b.Length - 1;
             for (; i >= 0; --i)
             {
                 if (b[i] == 0xff)
@@ -84,7 +80,7 @@ namespace Shadowsocks.Model
 
     public class IPSegment
     {
-        protected SortedList list = new SortedList();
+        protected SortedList list = new();
 
         public IPSegment(object val = null)
         {
@@ -93,8 +89,8 @@ namespace Shadowsocks.Model
 
         public bool insert(IPAddressCmp ipStart, IPAddressCmp ipEnd, object val)
         {
-            IPAddressCmp s = ipStart.ToIPv6();
-            IPAddressCmp e = ipEnd.ToIPv6().Inc();
+            var s = ipStart.ToIPv6();
+            var e = ipEnd.ToIPv6().Inc();
             object ed_val = null;
             if (list.Contains(s))
             {
@@ -104,14 +100,14 @@ namespace Shadowsocks.Model
             else
             {
                 list[s] = val;
-                int index = list.IndexOfKey(s) - 1;
+                var index = list.IndexOfKey(s) - 1;
                 if (index >= 0)
                 {
                     ed_val = list.GetByIndex(index);
                 }
             }
             {
-                int index = list.IndexOfKey(s);
+                var index = list.IndexOfKey(s);
                 while (index > 0)
                 {
                     if (val.Equals(list.GetByIndex(index - 1)))
@@ -123,10 +119,10 @@ namespace Shadowsocks.Model
                         break;
                 }
                 ++index;
-                bool keep = false;
-                while(index < list.Count)
+                var keep = false;
+                while (index < list.Count)
                 {
-                    int cmp = (list.GetKey(index) as IPAddressCmp).CompareTo(e);
+                    var cmp = (list.GetKey(index) as IPAddressCmp).CompareTo(e);
                     if (cmp >= 0)
                     {
                         if (cmp == 0)
@@ -166,13 +162,13 @@ namespace Shadowsocks.Model
 
         public object Get(IPAddressCmp ip)
         {
-            IPAddressCmp ip_addr = ip.ToIPv6();
+            var ip_addr = ip.ToIPv6();
             int l = 0, r = list.Count - 1;
             while (l < r)
             {
-                int m = (l + r + 1) / 2;
-                IPAddressCmp v = list.GetKey(m) as IPAddressCmp;
-                int cmp = v.CompareTo(ip_addr);
+                var m = (l + r + 1) / 2;
+                var v = list.GetKey(m) as IPAddressCmp;
+                var cmp = v.CompareTo(ip_addr);
                 if (cmp > 0)
                 {
                     r = m - 1;

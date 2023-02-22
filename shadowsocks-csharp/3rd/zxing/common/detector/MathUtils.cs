@@ -26,22 +26,19 @@ namespace ZXing.Common.Detector
       /// </summary>
       /// <param name="d">The d.</param>
       /// <returns></returns>
-      public static int round(float d)
-      {
-         return (int)(d + 0.5f);
-      }
+      public static int round(float d) => (int)(d + 0.5f);
 
       public static float distance(float aX, float aY, float bX, float bY)
       {
-         float xDiff = aX - bX;
-         float yDiff = aY - bY;
+         var xDiff = aX - bX;
+         var yDiff = aY - bY;
          return (float)Math.Sqrt(xDiff * xDiff + yDiff * yDiff);
       }
 
       public static float distance(int aX, int aY, int bX, int bY)
       {
-         int xDiff = aX - bX;
-         int yDiff = aY - bY;
+         var xDiff = aX - bX;
+         var yDiff = aY - bY;
          return (float)Math.Sqrt(xDiff * xDiff + yDiff * yDiff);
       }
    }

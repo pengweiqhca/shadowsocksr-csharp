@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Shadowsocks.Util
+﻿namespace Shadowsocks.Util
 {
     public static class ServerName
     {
         public static string HideServerAddr(string addr)
         {
-            System.Net.IPAddress ipAddr;
-            string serverAlterName = addr;
+            var serverAlterName = addr;
 
-            bool parsed = System.Net.IPAddress.TryParse(addr, out ipAddr);
+            var parsed = System.Net.IPAddress.TryParse(addr, out var ipAddr);
             if (parsed)
             {
                 char separator;
@@ -24,10 +19,10 @@ namespace Shadowsocks.Util
             }
             else
             {
-                int pos = addr.IndexOf('.', 1);
+                var pos = addr.IndexOf('.', 1);
                 if (pos > 0)
                 {
-                    serverAlterName = ("*" + addr.Substring(pos));
+                    serverAlterName = "*" + addr[pos..];
                 }
             }
 
@@ -36,19 +31,19 @@ namespace Shadowsocks.Util
 
         private static string HideAddr(string addr, char separator)
         {
-            string result = "";
+            var result = "";
 
-            string[] splited = addr.Split(separator);
-            string prefix = splited[0];
-            string suffix = splited[splited.Length - 1];
+            var splited = addr.Split(separator);
+            var prefix = splited[0];
+            var suffix = splited[^1];
 
             if (0 < prefix.Length)
-                result = (prefix + separator);
+                result = prefix + separator;
 
             result += "**";
 
             if (0 < suffix.Length)
-                result += (separator + suffix);
+                result += separator + suffix;
 
             return result;
         }

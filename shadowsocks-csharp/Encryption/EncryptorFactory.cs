@@ -6,16 +6,16 @@ namespace Shadowsocks.Encryption
 {
     public static class EncryptorFactory
     {
-        private static Dictionary<string, Type> _registeredEncryptors;
-        private static List<string> _registeredEncryptorNames;
+        private static readonly Dictionary<string, Type> _registeredEncryptors;
+        private static readonly List<string> _registeredEncryptorNames;
 
-        private static Type[] _constructorTypes = new Type[] { typeof(string), typeof(string), typeof(bool) };
+        private static readonly Type[] _constructorTypes = new[] { typeof(string), typeof(string), typeof(bool) };
 
         static EncryptorFactory()
         {
             _registeredEncryptors = new Dictionary<string, Type>();
             _registeredEncryptorNames = new List<string>();
-            foreach (string method in NoneEncryptor.SupportedCiphers())
+            foreach (var method in NoneEncryptor.SupportedCiphers())
             {
                 if (!_registeredEncryptorNames.Contains(method))
                 {
@@ -25,7 +25,7 @@ namespace Shadowsocks.Encryption
             }
 
             {
-                foreach (string method in MbedTLSEncryptor.SupportedCiphers())
+                foreach (var method in MbedTLSEncryptor.SupportedCiphers())
                 {
                     if (!_registeredEncryptorNames.Contains(method))
                     {
@@ -37,7 +37,7 @@ namespace Shadowsocks.Encryption
             if (LibcryptoEncryptor.isSupport())
             {
                 LibcryptoEncryptor.InitAviable();
-                foreach (string method in LibcryptoEncryptor.SupportedCiphers())
+                foreach (var method in LibcryptoEncryptor.SupportedCiphers())
                 {
                     if (!_registeredEncryptorNames.Contains(method))
                     {
@@ -46,7 +46,7 @@ namespace Shadowsocks.Encryption
                     }
                 }
             }
-            foreach (string method in SodiumEncryptor.SupportedCiphers())
+            foreach (var method in SodiumEncryptor.SupportedCiphers())
             {
                 if (!_registeredEncryptorNames.Contains(method))
                 {
@@ -56,10 +56,7 @@ namespace Shadowsocks.Encryption
             }
         }
 
-        public static List<string> GetEncryptor()
-        {
-            return _registeredEncryptorNames;
-        }
+        public static List<string> GetEncryptor() => _registeredEncryptorNames;
 
         public static IEncryptor GetEncryptor(string method, string password, bool cache)
         {
@@ -68,9 +65,9 @@ namespace Shadowsocks.Encryption
                 method = "aes-256-cfb";
             }
             method = method.ToLowerInvariant();
-            Type t = _registeredEncryptors[method];
-            ConstructorInfo c = t.GetConstructor(_constructorTypes);
-            IEncryptor result = (IEncryptor)c.Invoke(new object[] { method, password, cache });
+            var t = _registeredEncryptors[method];
+            var c = t.GetConstructor(_constructorTypes);
+            var result = (IEncryptor)c.Invoke(new object[] { method, password, cache });
             return result;
         }
 
@@ -81,10 +78,10 @@ namespace Shadowsocks.Encryption
                 method = "aes-256-cfb";
             }
             method = method.ToLowerInvariant();
-            Type t = _registeredEncryptors[method];
-            ConstructorInfo c = t.GetConstructor(_constructorTypes);
-            IEncryptor result = (IEncryptor)c.Invoke(new object[] { method, "0", false });
-            EncryptorInfo info = result.getInfo();
+            var t = _registeredEncryptors[method];
+            var c = t.GetConstructor(_constructorTypes);
+            var result = (IEncryptor)c.Invoke(new object[] { method, "0", false });
+            var info = result.getInfo();
             result.Dispose();
             return info;
         }

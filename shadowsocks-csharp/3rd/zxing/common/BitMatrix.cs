@@ -41,21 +41,13 @@ namespace ZXing.Common
       /// </returns>
       public int Width
       {
-         get
-         {
-            return width;
-         }
-
+         get => width;
       }
       /// <returns> The height of the matrix
       /// </returns>
       public int Height
       {
-         get
-         {
-            return height;
-         }
-
+         get => height;
       }
 
       // A helper to construct a square matrix.
@@ -68,11 +60,11 @@ namespace ZXing.Common
       {
          if (width < 1 || height < 1)
          {
-            throw new System.ArgumentException("Both dimensions must be greater than 0");
+            throw new ArgumentException("Both dimensions must be greater than 0");
          }
          this.width = width;
          this.height = height;
-         this.rowSize = (width + 31) >> 5;
+         rowSize = width + 31 >> 5;
          bits = new int[rowSize * height];
       }
 
@@ -97,14 +89,14 @@ namespace ZXing.Common
       {
          get
          {
-            int offset = y * rowSize + (x >> 5);
-            return (((int)((uint)(bits[offset]) >> (x & 0x1f))) & 1) != 0;
+            var offset = y * rowSize + (x >> 5);
+            return ((int)((uint)bits[offset] >> (x & 0x1f)) & 1) != 0;
          }
          set
          {
             if (value)
             {
-               int offset = y * rowSize + (x >> 5);
+               var offset = y * rowSize + (x >> 5);
                bits[offset] |= 1 << (x & 0x1f);
             }
          }
@@ -119,7 +111,7 @@ namespace ZXing.Common
       /// </param>
       public void flip(int x, int y)
       {
-         int offset = y * rowSize + (x >> 5);
+         var offset = y * rowSize + (x >> 5);
          bits[offset] ^= 1 << (x & 0x1f);
       }
 
@@ -139,22 +131,22 @@ namespace ZXing.Common
       {
          if (top < 0 || left < 0)
          {
-            throw new System.ArgumentException("Left and top must be nonnegative");
+            throw new ArgumentException("Left and top must be nonnegative");
          }
          if (height < 1 || width < 1)
          {
-            throw new System.ArgumentException("Height and width must be at least 1");
+            throw new ArgumentException("Height and width must be at least 1");
          }
-         int right = left + width;
-         int bottom = top + height;
+         var right = left + width;
+         var bottom = top + height;
          if (bottom > this.height || right > this.width)
          {
-            throw new System.ArgumentException("The region must fit inside the matrix");
+            throw new ArgumentException("The region must fit inside the matrix");
          }
-         for (int y = top; y < bottom; y++)
+         for (var y = top; y < bottom; y++)
          {
-            int offset = y * rowSize;
-            for (int x = left; x < right; x++)
+            var offset = y * rowSize;
+            for (var x = left; x < right; x++)
             {
                bits[offset + (x >> 5)] |= 1 << (x & 0x1f);
             }
@@ -181,8 +173,8 @@ namespace ZXing.Common
          {
             row.clear();
          }
-         int offset = y * rowSize;
-         for (int x = 0; x < rowSize; x++)
+         var offset = y * rowSize;
+         for (var x = 0; x < rowSize; x++)
          {
             row.setBulk(x << 5, bits[offset + x]);
          }
@@ -206,7 +198,7 @@ namespace ZXing.Common
       /// <returns>{x,y} coordinate of top-left-most 1 bit, or null if it is all white</returns>
       public int[] getTopLeftOnBit()
       {
-         int bitsOffset = 0;
+         var bitsOffset = 0;
          while (bitsOffset < bits.Length && bits[bitsOffset] == 0)
          {
             bitsOffset++;
@@ -215,12 +207,12 @@ namespace ZXing.Common
          {
             return null;
          }
-         int y = bitsOffset / rowSize;
-         int x = (bitsOffset % rowSize) << 5;
+         var y = bitsOffset / rowSize;
+         var x = bitsOffset % rowSize << 5;
 
-         int theBits = bits[bitsOffset];
-         int bit = 0;
-         while ((theBits << (31 - bit)) == 0)
+         var theBits = bits[bitsOffset];
+         var bit = 0;
+         while (theBits << 31 - bit == 0)
          {
             bit++;
          }
@@ -230,7 +222,7 @@ namespace ZXing.Common
 
       public int[] getBottomRightOnBit()
       {
-         int bitsOffset = bits.Length - 1;
+         var bitsOffset = bits.Length - 1;
          while (bitsOffset >= 0 && bits[bitsOffset] == 0)
          {
             bitsOffset--;
@@ -240,19 +232,19 @@ namespace ZXing.Common
             return null;
          }
 
-         int y = bitsOffset / rowSize;
-         int x = (bitsOffset % rowSize) << 5;
+         var y = bitsOffset / rowSize;
+         var x = bitsOffset % rowSize << 5;
 
-         int theBits = bits[bitsOffset];
-         int bit = 31;
+         var theBits = bits[bitsOffset];
+         var bit = 31;
 
-         while (((int)((uint)theBits >> bit)) == 0) // (theBits >>> bit)
+         while ((int)((uint)theBits >> bit) == 0) // (theBits >>> bit)
          {
             bit--;
          }
          x += bit;
 
-         return new int[] { x, y };
+         return new[] { x, y };
       }
 
    }

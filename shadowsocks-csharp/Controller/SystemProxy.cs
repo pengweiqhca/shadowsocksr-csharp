@@ -1,13 +1,7 @@
-﻿using System.Windows.Forms;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.IO;
+﻿using Microsoft.Win32;
 using Shadowsocks.Model;
-
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace Shadowsocks.Controller
 {
@@ -63,7 +57,7 @@ namespace Shadowsocks.Controller
 
     /// <summary>
     /// Constants used in INTERNET_PER_CONN_OPTON struct.
-    /// Windows 7 and later:  
+    /// Windows 7 and later:
     /// Clients that support Internet Explorer 8 should query the connection type using INTERNET_PER_CONN_FLAGS_UI.
     /// If this query fails, then the system is running a previous version of Internet Explorer and the client should
     /// query again with INTERNET_PER_CONN_FLAGS.
@@ -91,7 +85,7 @@ namespace Shadowsocks.Controller
         [FieldOffset(0)]
         public int dwValue;
         [FieldOffset(0)]
-        public System.IntPtr pszValue;
+        public IntPtr pszValue;
         [FieldOffset(0)]
         public System.Runtime.InteropServices.ComTypes.FILETIME ftValue;
 
@@ -128,13 +122,13 @@ namespace Shadowsocks.Controller
         public int Size;
 
         // The connection to be set. NULL means LAN.
-        public System.IntPtr Connection;
+        public IntPtr Connection;
 
         public int OptionCount;
         public int OptionError;
 
         // List of INTERNET_PER_CONN_OPTIONs.
-        public System.IntPtr pOptions;
+        public IntPtr pOptions;
 
         public void Dispose()
         {
@@ -167,7 +161,7 @@ namespace Shadowsocks.Controller
         /// </summary>
         private static void SetIEProxy(bool enable, bool global, string proxyServer, string pacURL, string connName)
         {
-            List<INTERNET_PER_CONN_OPTION> _optionlist = new List<INTERNET_PER_CONN_OPTION>();
+            var _optionlist = new List<INTERNET_PER_CONN_OPTION>();
 
             if (enable)
             {
@@ -177,9 +171,8 @@ namespace Shadowsocks.Controller
                     _optionlist.Add(new INTERNET_PER_CONN_OPTION
                     {
                         dwOption = (int)INTERNET_PER_CONN_OptionEnum.INTERNET_PER_CONN_FLAGS_UI,
-                        Value = { dwValue = (int)(INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_PROXY
-                                                //| INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_DIRECT
-                                                ) }
+                        Value = { dwValue = (int)INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_PROXY }
+                        //| INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_DIRECT
                     });
                     _optionlist.Add(new INTERNET_PER_CONN_OPTION
                     {
@@ -213,9 +206,8 @@ namespace Shadowsocks.Controller
                 _optionlist.Add(new INTERNET_PER_CONN_OPTION
                 {
                     dwOption = (int)INTERNET_PER_CONN_OptionEnum.INTERNET_PER_CONN_FLAGS_UI,
-                    Value = { dwValue = (int)(INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_DIRECT
-                                            //| INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_AUTO_DETECT
-                                            ) }
+                    Value = { dwValue = (int)INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_DIRECT }
+                    //| INTERNET_OPTION_PER_CONN_FLAGS_UI.PROXY_TYPE_AUTO_DETECT
                 });
                 _optionlist.Add(new INTERNET_PER_CONN_OPTION
                 {
@@ -225,49 +217,50 @@ namespace Shadowsocks.Controller
             }
 
             // Get total length of INTERNET_PER_CONN_OPTIONs
-            int len = 0;
-            foreach(INTERNET_PER_CONN_OPTION option in _optionlist)
+            var len = 0;
+            foreach (var option in _optionlist)
             {
                 len += Marshal.SizeOf(option);
             }
 
             // Allocate a block of memory of the options.
-            IntPtr buffer = Marshal.AllocCoTaskMem(len);
+            var buffer = Marshal.AllocCoTaskMem(len);
 
-            IntPtr current = buffer;
+            var current = buffer;
 
             // Marshal data from a managed object to an unmanaged block of memory.
-            foreach (INTERNET_PER_CONN_OPTION eachOption in _optionlist)
+            foreach (var eachOption in _optionlist)
             {
                 Marshal.StructureToPtr(eachOption, current, false);
                 current = (IntPtr)((long)current + Marshal.SizeOf(eachOption));
             }
 
             // Initialize a INTERNET_PER_CONN_OPTION_LIST instance.
-            INTERNET_PER_CONN_OPTION_LIST optionList = new INTERNET_PER_CONN_OPTION_LIST();
-
-            // Point to the allocated memory.
-            optionList.pOptions = buffer;
+            var optionList = new INTERNET_PER_CONN_OPTION_LIST
+            {
+                // Point to the allocated memory.
+                pOptions = buffer
+            };
 
             // Return the unmanaged size of an object in bytes.
             optionList.Size = Marshal.SizeOf(optionList);
 
-            optionList.Connection = String.IsNullOrEmpty(connName)
+            optionList.Connection = string.IsNullOrEmpty(connName)
                 ? IntPtr.Zero // NULL means LAN
                 : Marshal.StringToHGlobalAuto(connName); // TODO: not working if contains Chinese
 
             optionList.OptionCount = _optionlist.Count;
             optionList.OptionError = 0;
-            int optionListSize = Marshal.SizeOf(optionList);
+            var optionListSize = Marshal.SizeOf(optionList);
 
             // Allocate memory for the INTERNET_PER_CONN_OPTION_LIST instance.
-            IntPtr intptrStruct = Marshal.AllocCoTaskMem(optionListSize);
+            var intptrStruct = Marshal.AllocCoTaskMem(optionListSize);
 
             // Marshal data from a managed object to an unmanaged block of memory.
             Marshal.StructureToPtr(optionList, intptrStruct, true);
 
             // Set internet settings.
-            bool bReturn = NativeMethods.InternetSetOption(
+            var bReturn = NativeMethods.InternetSetOption(
                 IntPtr.Zero,
                 (int)INTERNET_OPTION.INTERNET_OPTION_PER_CONNECTION_OPTION,
                 intptrStruct, optionListSize);
@@ -320,7 +313,7 @@ namespace Shadowsocks.Controller
             {
                 // found entries, set LAN and each connection
                 SetIEProxy(enable, global, proxyServer, pacURL, null);
-                foreach (string connName in allConnections)
+                foreach (var connName in allConnections)
                 {
                     SetIEProxy(enable, global, proxyServer, pacURL, connName);
                 }
@@ -391,12 +384,12 @@ namespace Shadowsocks.Controller
             public int dwSize;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)RasFieldSizeConstants.RAS_MaxEntryName + 1)]
-            public string szEntryName;
+            public readonly string szEntryName;
 
-            public int dwFlags;
+            public readonly int dwFlags;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)RasFieldSizeConstants.RAS_MaxPath + 1)]
-            public string szPhonebookPath;
+            public readonly string szPhonebookPath;
         }
 
         [DllImport("rasapi32.dll", CharSet = CharSet.Auto)]
@@ -424,9 +417,8 @@ namespace Shadowsocks.Controller
         /// </returns>
         public static uint GetAllConns(ref string[] allConns)
         {
-            int lpNames = 0;
-            int entryNameSize = 0;
-            int lpSize = 0;
+            var entryNameSize = 0;
+            var lpSize = 0;
             uint retval = ERROR_SUCCESS;
             RasEntryName[] names = null;
 
@@ -435,12 +427,12 @@ namespace Shadowsocks.Controller
             // Windows Vista or later:  To determine the required buffer size, call RasEnumEntries
             // with lprasentryname set to NULL. The variable pointed to by lpcb should be set to zero.
             // The function will return the required buffer size in lpcb and an error code of ERROR_BUFFER_TOO_SMALL.
-            retval = RasEnumEntries(null, null, null, ref lpSize, out lpNames);
+            retval = RasEnumEntries(null, null, null, ref lpSize, out var lpNames);
 
             if (retval == ERROR_BUFFER_TOO_SMALL)
             {
                 names = new RasEntryName[lpNames];
-                for (int i = 0; i < names.Length; i++)
+                for (var i = 0; i < names.Length; i++)
                 {
                     names[i].dwSize = entryNameSize;
                 }
@@ -458,16 +450,13 @@ namespace Shadowsocks.Controller
 
                 allConns = new string[names.Length];
 
-                for (int i = 0; i < names.Length; i++)
+                for (var i = 0; i < names.Length; i++)
                 {
                     allConns[i] = names[i].szEntryName;
                 }
                 return 0;
             }
-            else
-            {
-                return 2;
-            }
+            return 2;
         }
     }
 
@@ -480,7 +469,7 @@ namespace Shadowsocks.Controller
 
         public static void NotifyIE()
         {
-            // These lines implement the Interface in the beginning of program 
+            // These lines implement the Interface in the beginning of program
             // They cause the OS to refresh the settings, causing IP to realy update
             _settingsReturn = NativeMethods.InternetSetOption(IntPtr.Zero, (int)INTERNET_OPTION.INTERNET_OPTION_SETTINGS_CHANGED, IntPtr.Zero, 0);
             _refreshReturn = NativeMethods.InternetSetOption(IntPtr.Zero, (int)INTERNET_OPTION.INTERNET_OPTION_REFRESH, IntPtr.Zero, 0);
@@ -502,7 +491,7 @@ namespace Shadowsocks.Controller
             // we are building x86 binary for both x86 and x64, which will
             // cause problem when opening registry key
             // detect operating system instead of CPU
-            RegistryKey userKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, "",
+            var userKey = RegistryKey.OpenRemoteBaseKey(RegistryHive.CurrentUser, "",
                 Environment.Is64BitOperatingSystem ? RegistryView.Registry64 : RegistryView.Registry32
                 ).OpenSubKey(name, writable);
             return userKey;
@@ -510,7 +499,7 @@ namespace Shadowsocks.Controller
 
         public static void Update(Configuration config, bool forceDisable)
         {
-            int sysProxyMode = config.sysProxyMode;
+            var sysProxyMode = config.sysProxyMode;
             if (sysProxyMode == (int)ProxyMode.NoModify)
             {
                 return;
@@ -519,51 +508,47 @@ namespace Shadowsocks.Controller
             {
                 sysProxyMode = (int)ProxyMode.Direct;
             }
-            bool global = sysProxyMode == (int)ProxyMode.Global;
-            bool enabled = sysProxyMode != (int)ProxyMode.Direct;
-            Version win8 = new Version("6.2");
-            //if (Environment.OSVersion.Version.CompareTo(win8) < 0)
-            {
-                using (RegistryKey registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true))
+            var global = sysProxyMode == (int)ProxyMode.Global;
+            var enabled = sysProxyMode != (int)ProxyMode.Direct;
+            var win8 = new Version("6.2");
+
+            using (var registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true))
+                try
                 {
-                    try
+                    if (enabled)
                     {
-                        if (enabled)
+                        if (global)
                         {
-                            if (global)
-                            {
-                                RegistrySetValue(registry, "ProxyEnable", 1);
-                                RegistrySetValue(registry, "ProxyServer", "127.0.0.1:" + config.localPort.ToString());
-                                RegistrySetValue(registry, "AutoConfigURL", "");
-                            }
-                            else
-                            {
-                                string pacUrl;
-                                pacUrl = "http://127.0.0.1:" + config.localPort.ToString() + "/pac?" + "auth=" + config.localAuthPassword + "&t=" + Util.Utils.GetTimestamp(DateTime.Now);
-                                RegistrySetValue(registry, "ProxyEnable", 0);
-                                RegistrySetValue(registry, "ProxyServer", "");
-                                RegistrySetValue(registry, "AutoConfigURL", pacUrl);
-                            }
+                            RegistrySetValue(registry, "ProxyEnable", 1);
+                            RegistrySetValue(registry, "ProxyServer", $"127.0.0.1:{config.localPort}");
+                            RegistrySetValue(registry, "AutoConfigURL", "");
                         }
                         else
                         {
+                            var pacUrl = $"http://127.0.0.1:{config.localPort}/pac?auth={config.localAuthPassword}&t={Util.Utils.GetTimestamp(DateTime.Now)}";
                             RegistrySetValue(registry, "ProxyEnable", 0);
                             RegistrySetValue(registry, "ProxyServer", "");
-                            RegistrySetValue(registry, "AutoConfigURL", "");
+                            RegistrySetValue(registry, "AutoConfigURL", pacUrl);
                         }
-                        IEProxyUpdate(config, sysProxyMode);
-                        SystemProxy.NotifyIE();
-                        //Must Notify IE first, or the connections do not chanage
-                        CopyProxySettingFromLan();
                     }
-                    catch (Exception e)
+                    else
                     {
-                        Logging.LogUsefulException(e);
-                        // TODO this should be moved into views
-                        //MessageBox.Show(I18N.GetString("Failed to update registry"));
+                        RegistrySetValue(registry, "ProxyEnable", 0);
+                        RegistrySetValue(registry, "ProxyServer", "");
+                        RegistrySetValue(registry, "AutoConfigURL", "");
                     }
+                    IEProxyUpdate(config, sysProxyMode);
+                    NotifyIE();
+                    //Must Notify IE first, or the connections do not chanage
+                    CopyProxySettingFromLan();
                 }
-            }
+                catch (Exception e)
+                {
+                    Logging.LogUsefulException(e);
+                    // TODO this should be moved into views
+                    //MessageBox.Show(I18N.GetString("Failed to update registry"));
+                }
+
             if (Environment.OSVersion.Version.CompareTo(win8) >= 0)
             {
                 try
@@ -572,12 +557,11 @@ namespace Shadowsocks.Controller
                     {
                         if (global)
                         {
-                            WinINet.SetIEProxy(true, true, "127.0.0.1:" + config.localPort.ToString(), "");
+                            WinINet.SetIEProxy(true, true, $"127.0.0.1:{config.localPort}", "");
                         }
                         else
                         {
-                            string pacUrl;
-                            pacUrl = $"http://127.0.0.1:{config.localPort}/pac?auth={config.localAuthPassword}&t={Util.Utils.GetTimestamp(DateTime.Now)}";
+                            var pacUrl = $"http://127.0.0.1:{config.localPort}/pac?auth={config.localAuthPassword}&t={Util.Utils.GetTimestamp(DateTime.Now)}";
                             WinINet.SetIEProxy(true, false, "", pacUrl);
                         }
                     }
@@ -595,32 +579,30 @@ namespace Shadowsocks.Controller
 
         private static void CopyProxySettingFromLan()
         {
-            using (RegistryKey registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections", true))
+            using var registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections", true);
+            try
             {
-                try
+                var defaultValue = registry.GetValue("DefaultConnectionSettings");
+                var connections = registry.GetValueNames();
+                foreach (var each in connections)
                 {
-                    var defaultValue = registry.GetValue("DefaultConnectionSettings");
-                    var connections = registry.GetValueNames();
-                    foreach (String each in connections)
+                    switch (each.ToUpperInvariant())
                     {
-                        switch (each.ToUpperInvariant())
-                        {
-                            case "DEFAULTCONNECTIONSETTINGS":
-                            case "SAVEDLEGACYSETTINGS":
+                        case "DEFAULTCONNECTIONSETTINGS":
+                        case "SAVEDLEGACYSETTINGS":
                             //case "LAN CONNECTION":
-                                continue;
-                            default:
-                                //set all the connections's proxy as the lan
-                                registry.SetValue(each, defaultValue);
-                                continue;
-                        }
+                            continue;
+                        default:
+                            //set all the connections's proxy as the lan
+                            registry.SetValue(each, defaultValue);
+                            continue;
                     }
-                    SystemProxy.NotifyIE();
                 }
-                catch (IOException e)
-                {
-                    Logging.LogUsefulException(e);
-                }
+                NotifyIE();
+            }
+            catch (IOException e)
+            {
+                Logging.LogUsefulException(e);
             }
         }
 
@@ -633,15 +615,15 @@ namespace Shadowsocks.Controller
         private static void BytePushback(byte[] buffer, ref int buffer_len, string str)
         {
             BytePushback(buffer, ref buffer_len, str.Length);
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(str);
             bytes.CopyTo(buffer, buffer_len);
             buffer_len += bytes.Length;
         }
 
         private static byte[] GenConnectionSettings(Configuration config, int sysProxyMode, int counter)
         {
-            byte[] buffer = new byte[1024];
-            int buffer_len = 0;
+            var buffer = new byte[1024];
+            var buffer_len = 0;
             BytePushback(buffer, ref buffer_len, 70);
             BytePushback(buffer, ref buffer_len, counter + 1);
             if (sysProxyMode == (int)ProxyMode.Direct)
@@ -651,14 +633,14 @@ namespace Shadowsocks.Controller
             else
                 BytePushback(buffer, ref buffer_len, 3);
 
-            string proxy = "127.0.0.1:" + config.localPort.ToString();
+            var proxy = $"127.0.0.1:{config.localPort}";
             BytePushback(buffer, ref buffer_len, proxy);
 
-            string bypass = sysProxyMode == (int)ProxyMode.Global ? "" : "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;172.32.*;192.168.*;<local>";
+            var bypass = sysProxyMode == (int)ProxyMode.Global ? "" : "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;172.32.*;192.168.*;<local>";
             BytePushback(buffer, ref buffer_len, bypass);
 
-            string pacUrl = "";
-            pacUrl = "http://127.0.0.1:" + config.localPort.ToString() + "/pac?" + "auth=" + config.localAuthPassword + "&t=" + Util.Utils.GetTimestamp(DateTime.Now);
+            var pacUrl = "";
+            pacUrl = $"http://127.0.0.1:{config.localPort}/pac?auth={config.localAuthPassword}&t={Util.Utils.GetTimestamp(DateTime.Now)}";
             BytePushback(buffer, ref buffer_len, pacUrl);
 
             buffer_len += 0x20;
@@ -672,15 +654,15 @@ namespace Shadowsocks.Controller
         /// </summary>
         private static void IEProxyUpdate(Configuration config, int sysProxyMode)
         {
-            using (RegistryKey registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections", true))
+            using (var registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections", true))
             {
                 try
                 {
-                    byte[] defConnection = (byte[])registry.GetValue("DefaultConnectionSettings");
-                    int counter = 0;
-                    if (defConnection != null && defConnection.Length >= 8)
+                    var defConnection = (byte[])registry.GetValue("DefaultConnectionSettings");
+                    var counter = 0;
+                    if (defConnection is { Length: >= 8 })
                     {
-                        counter = defConnection[4] | (defConnection[5] << 8);
+                        counter = defConnection[4] | defConnection[5] << 8;
                     }
                     defConnection = GenConnectionSettings(config, sysProxyMode, counter);
                     RegistrySetValue(registry, "DefaultConnectionSettings", defConnection);
@@ -691,7 +673,7 @@ namespace Shadowsocks.Controller
                     Logging.LogUsefulException(e);
                 }
             }
-            using (RegistryKey registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true))
+            using (var registry = OpenUserRegKey(@"Software\Microsoft\Windows\CurrentVersion\Internet Settings", true))
             {
                 try
                 {

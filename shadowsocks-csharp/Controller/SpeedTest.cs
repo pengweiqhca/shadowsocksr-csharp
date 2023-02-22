@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using Shadowsocks.Model;
+﻿using Shadowsocks.Model;
 
 namespace Shadowsocks.Controller
 {
@@ -20,15 +16,15 @@ namespace Shadowsocks.Controller
         public DateTime timeConnectEnd;
         public DateTime timeBeginUpload;
         public DateTime timeBeginDownload;
-        public long sizeUpload = 0;
-        public long sizeDownload = 0;
-        public long sizeProtocolRecv = 0;
-        public long sizeRecv = 0;
-        private List<TransLog> sizeTransfer = new List<TransLog>();
+        public long sizeUpload;
+        public long sizeDownload;
+        public long sizeProtocolRecv;
+        public long sizeRecv;
+        private readonly List<TransLog> sizeTransfer = new();
         public string server;
         public ServerTransferTotal transfer;
-        public int upload_cnt = 0;
-        public int download_cnt = 0;
+        public int upload_cnt;
+        public int download_cnt;
 
         public void BeginConnect()
         {
@@ -114,17 +110,17 @@ namespace Shadowsocks.Controller
 
         public string TransferLog()
         {
-            string ret = "";
+            var ret = "";
 #if DEBUG
-            int lastdir = -1;
-            foreach (TransLog t in sizeTransfer)
+            var lastdir = -1;
+            foreach (var t in sizeTransfer)
             {
                 if (t.dir != lastdir)
                 {
                     lastdir = t.dir;
-                    ret += (t.dir == 0 ? " u" : " d");
+                    ret += t.dir == 0 ? " u" : " d";
                 }
-                ret += " " + t.size.ToString();
+                ret += $" {t.size}";
             }
 #endif
             return ret;
@@ -143,18 +139,15 @@ namespace Shadowsocks.Controller
             SOCKS5 = 5,
         }
         protected Protocol protocol = Protocol.NOTBEGIN;
-        protected byte[] send_buffer = new byte[0];
-        protected byte[] recv_buffer = new byte[0];
+        protected byte[] send_buffer = Array.Empty<byte>();
+        protected byte[] recv_buffer = Array.Empty<byte>();
 
         public bool Pass
         {
             get; set;
         }
 
-        public ProtocolResponseDetector()
-        {
-            Pass = false;
-        }
+        public ProtocolResponseDetector() => Pass = false;
 
         public void OnSend(byte[] send_data, int length)
         {
@@ -164,16 +157,16 @@ namespace Shadowsocks.Controller
 
             if (send_buffer.Length < 2) return;
 
-            int head_size = Obfs.ObfsBase.GetHeadSize(send_buffer, send_buffer.Length);
+            var head_size = Obfs.ObfsBase.GetHeadSize(send_buffer, send_buffer.Length);
             if (send_buffer.Length - head_size < 0) return;
-            byte[] data = new byte[send_buffer.Length - head_size];
+            var data = new byte[send_buffer.Length - head_size];
             Array.Copy(send_buffer, head_size, data, 0, data.Length);
 
             if (data.Length < 2) return;
 
             if (data.Length > 8)
             {
-                if (data[0] == 22 && data[1] == 3 && (data[2] >= 0 && data[2] <= 3))
+                if (data[0] == 22 && data[1] == 3 && data[2] >= 0 && data[2] <= 3)
                 {
                     protocol = Protocol.TLS;
                     return;
@@ -186,7 +179,6 @@ namespace Shadowsocks.Controller
                     )
                 {
                     protocol = Protocol.HTTP;
-                    return;
                 }
             }
             else
@@ -196,7 +188,7 @@ namespace Shadowsocks.Controller
         }
         public int OnRecv(byte[] recv_data, int length)
         {
-            if (protocol == Protocol.UNKONWN || protocol == Protocol.NOTBEGIN) return 0;
+            if (protocol is Protocol.UNKONWN or Protocol.NOTBEGIN) return 0;
             Array.Resize(ref recv_buffer, recv_buffer.Length + length);
             Array.Copy(recv_data, 0, recv_buffer, recv_buffer.Length - length, length);
 
@@ -209,26 +201,20 @@ namespace Shadowsocks.Controller
                     Finish();
                     return 0;
                 }
-                else
-                {
-                    protocol = Protocol.UNKONWN;
-                    return 1;
-                    //throw new ProtocolException("Wrong http response");
-                }
+                protocol = Protocol.UNKONWN;
+                return 1;
+                //throw new ProtocolException("Wrong http response");
             }
-            else if (protocol == Protocol.TLS && recv_buffer.Length > 4)
+            if (protocol == Protocol.TLS && recv_buffer.Length > 4)
             {
                 if (recv_buffer[0] == 22 && recv_buffer[1] == 3)
                 {
                     Finish();
                     return 0;
                 }
-                else
-                {
-                    protocol = Protocol.UNKONWN;
-                    return 2;
-                    //throw new ProtocolException("Wrong tls response");
-                }
+                protocol = Protocol.UNKONWN;
+                return 2;
+                //throw new ProtocolException("Wrong tls response");
             }
             return 0;
         }

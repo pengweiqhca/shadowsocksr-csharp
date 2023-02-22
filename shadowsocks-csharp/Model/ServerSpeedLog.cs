@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Shadowsocks.Model
+﻿namespace Shadowsocks.Model
 {
     public class TransLog
     {
@@ -54,23 +50,23 @@ namespace Shadowsocks.Model
     }
     public class ServerSpeedLog
     {
-        private long totalConnectTimes = 0;
-        private long totalDisconnectTimes = 0;
-        private long errorConnectTimes = 0;
-        private long errorTimeoutTimes = 0;
-        private long errorDecodeTimes = 0;
-        private long errorEmptyTimes = 0;
-        private long errorContinurousTimes = 0;
-        private long transUpload = 0;
-        private long transDownload = 0;
-        private long transDownloadRaw = 0;
-        private List<TransLog> downTransLog = new List<TransLog>();
-        private List<TransLog> upTransLog = new List<TransLog>();
-        private long maxTransDownload = 0;
-        private long maxTransUpload = 0;
+        private long totalConnectTimes;
+        private long totalDisconnectTimes;
+        private long errorConnectTimes;
+        private long errorTimeoutTimes;
+        private long errorDecodeTimes;
+        private long errorEmptyTimes;
+        private long errorContinurousTimes;
+        private long transUpload;
+        private long transDownload;
+        private long transDownloadRaw;
+        private readonly List<TransLog> downTransLog = new();
+        private readonly List<TransLog> upTransLog = new();
+        private long maxTransDownload;
+        private long maxTransUpload;
         private int avgConnectTime = -1;
         //private List<TransLog> speedLog = null;
-        private LinkedList<ErrorLog> errList = new LinkedList<ErrorLog>();
+        private readonly LinkedList<ErrorLog> errList = new();
 
         private const int avgTime = 5;
 
@@ -105,7 +101,7 @@ namespace Shadowsocks.Model
 
         public ServerSpeedLogShow Translate()
         {
-            ServerSpeedLogShow ret = new ServerSpeedLogShow();
+            var ret = new ServerSpeedLogShow();
             lock (this)
             {
                 Sweep();
@@ -194,7 +190,7 @@ namespace Shadowsocks.Model
             {
                 long avg_totalBytes = 0;
                 double avg_totalTime = 0;
-                for (int i = 0; i < transAvgLog.Count; ++i)
+                for (var i = 0; i < transAvgLog.Count; ++i)
                 {
                     avg_totalBytes += transAvgLog[i].size - transAvgLog[i].firstsize;
                     avg_totalTime += (transAvgLog[i].endTime - transAvgLog[i].recvTime).TotalSeconds;
@@ -211,7 +207,7 @@ namespace Shadowsocks.Model
                 lock (this)
                 {
                     transLog = new List<TransLog>();
-                    for (int i = 0; i < downTransLog.Count; ++i)
+                    for (var i = 0; i < downTransLog.Count; ++i)
                     {
                         transLog.Add(downTransLog[i]);
                     }
@@ -219,25 +215,24 @@ namespace Shadowsocks.Model
                 {
                     long totalBytes = 0;
                     double totalTime = 0;
-                    if (transLog.Count == 0 || transLog.Count > 0 && DateTime.Now > transLog[transLog.Count - 1].recvTime.AddSeconds(avgTime))
+                    if (transLog.Count == 0 || transLog.Count > 0 && DateTime.Now > transLog[^1].recvTime.AddSeconds(avgTime))
                     {
                         return 0;
                     }
-                    for (int i = 0; i < transLog.Count; ++i)
+                    for (var i = 0; i < transLog.Count; ++i)
                     {
                         totalBytes += transLog[i].size;
                     }
                     totalBytes -= transLog[0].firstsize;
 
                     if (transLog.Count > 1)
-                        totalTime = (transLog[transLog.Count - 1].endTime - transLog[0].recvTime).TotalSeconds;
+                        totalTime = (transLog[^1].endTime - transLog[0].recvTime).TotalSeconds;
                     if (totalTime > 0.2)
                     {
-                        long ret = (long)(totalBytes / totalTime);
+                        var ret = (long)(totalBytes / totalTime);
                         return ret;
                     }
-                    else
-                        return 0;
+                    return 0;
                 }
             }
         }
@@ -248,10 +243,10 @@ namespace Shadowsocks.Model
                 List<TransLog> transLog;
                 lock (this)
                 {
-                    if (this.upTransLog == null)
+                    if (upTransLog == null)
                         return 0;
                     transLog = new List<TransLog>();
-                    for (int i = 0; i < upTransLog.Count; ++i)
+                    for (var i = 0; i < upTransLog.Count; ++i)
                     {
                         transLog.Add(upTransLog[i]);
                     }
@@ -259,34 +254,30 @@ namespace Shadowsocks.Model
                 {
                     long totalBytes = 0;
                     double totalTime = 0;
-                    if (transLog.Count == 0 || transLog.Count > 0 && DateTime.Now > transLog[transLog.Count - 1].recvTime.AddSeconds(avgTime))
+                    if (transLog.Count == 0 || transLog.Count > 0 && DateTime.Now > transLog[^1].recvTime.AddSeconds(avgTime))
                     {
                         return 0;
                     }
-                    for (int i = 0; i < transLog.Count; ++i)
+                    for (var i = 0; i < transLog.Count; ++i)
                     {
                         totalBytes += transLog[i].size;
                     }
                     totalBytes -= transLog[0].firstsize;
 
                     if (transLog.Count > 1)
-                        totalTime = (transLog[transLog.Count - 1].endTime - transLog[0].recvTime).TotalSeconds;
+                        totalTime = (transLog[^1].endTime - transLog[0].recvTime).TotalSeconds;
                     if (totalTime > 0.2)
                     {
-                        long ret = (long)(totalBytes / totalTime);
+                        var ret = (long)(totalBytes / totalTime);
                         return ret;
                     }
-                    else
-                        return 0;
+                    return 0;
                 }
             }
         }
         public long AvgConnectTime
         {
-            get
-            {
-                return avgConnectTime;
-            }
+            get => avgConnectTime;
         }
         public void ClearError()
         {
@@ -356,7 +347,7 @@ namespace Shadowsocks.Model
                 if ((DateTime.Now - errList.First.Value.time).TotalMinutes < 30 && errList.Count < 100)
                     break;
 
-                int errCode = errList.First.Value.errno;
+                var errCode = errList.First.Value.errno;
                 errList.RemoveFirst();
                 if (errCode == 1)
                 {
@@ -431,7 +422,7 @@ namespace Shadowsocks.Model
             {
                 const int base_time_diff = 100;
                 const int max_time_diff = 3 * base_time_diff;
-                int time_diff = (int)(now - transLog[transLog.Count - 1].recvTime).TotalMilliseconds;
+                var time_diff = (int)(now - transLog[^1].recvTime).TotalMilliseconds;
                 if (time_diff < 0)
                 {
                     transLog.Clear();
@@ -440,10 +431,10 @@ namespace Shadowsocks.Model
                 }
                 if (time_diff < base_time_diff)
                 {
-                    transLog[transLog.Count - 1].times++;
-                    transLog[transLog.Count - 1].size += bytes;
-                    if (transLog[transLog.Count - 1].endTime < now)
-                        transLog[transLog.Count - 1].endTime = now;
+                    transLog[^1].times++;
+                    transLog[^1].size += bytes;
+                    if (transLog[^1].endTime < now)
+                        transLog[^1].endTime = now;
                 }
                 else
                 {
@@ -451,11 +442,11 @@ namespace Shadowsocks.Model
                     {
                         transLog.Add(new TransLog(bytes, now));
 
-                        int base_times = 1 + (maxTrans > 1024 * 512 ? 1 : 0);
-                        int last_index = (transLog.Count - 1) - 2;
+                        var base_times = 1 + (maxTrans > 1024 * 512 ? 1 : 0);
+                        var last_index = transLog.Count - 1 - 2;
                         if (updateMaxTrans && transLog.Count >= 6 && transLog[last_index].times > base_times)
                         {
-                            int begin_index = last_index - 1;
+                            var begin_index = last_index - 1;
                             for (; begin_index > 0; --begin_index)
                             {
                                 if ((transLog[begin_index + 1].recvTime - transLog[begin_index].endTime).TotalMilliseconds > max_time_diff
@@ -468,10 +459,12 @@ namespace Shadowsocks.Model
                             if (begin_index <= last_index - 4)
                             {
                                 begin_index++;
-                                TransLog t = new TransLog(transLog[begin_index].firstsize, transLog[begin_index].recvTime);
-                                t.endTime = transLog[last_index].endTime;
-                                t.size = 0;
-                                for (int i = begin_index; i <= last_index; ++i)
+                                var t = new TransLog(transLog[begin_index].firstsize, transLog[begin_index].recvTime)
+                                {
+                                    endTime = transLog[last_index].endTime,
+                                    size = 0
+                                };
+                                for (var i = begin_index; i <= last_index; ++i)
                                 {
                                     t.size += transLog[i].size;
                                 }
@@ -481,7 +474,7 @@ namespace Shadowsocks.Model
                                 }
                                 else
                                 {
-                                    double a = 2.0 / (1 + 32);
+                                    var a = 2.0 / (1 + 32);
                                     maxTrans = (long)(0.5 + maxTrans * (1 - a) + a * ((t.size - t.firstsize) / (t.endTime - t.recvTime).TotalSeconds));
                                 }
                             }
@@ -489,7 +482,7 @@ namespace Shadowsocks.Model
                     }
                     else
                     {
-                        int i = transLog.Count - 1;
+                        var i = transLog.Count - 1;
                         for (; i >= 0; --i)
                         {
                             if (transLog[i].recvTime > now && i > 0)
@@ -579,7 +572,7 @@ namespace Shadowsocks.Model
                 }
                 else
                 {
-                    double a = 2.0 / (1 + 16);
+                    var a = 2.0 / (1 + 16);
                     avgConnectTime = (int)(0.5 + avgConnectTime * (1 - a) + a * millisecond);
                 }
             }

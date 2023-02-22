@@ -20,7 +20,7 @@ namespace ZXing
    /// Enumerates barcode formats known to this package.
    /// </summary>
    /// <author>Sean Owen</author>
-   [System.Flags]
+   [Flags]
    public enum BarcodeFormat
    {
       /// <summary>Aztec 2D barcode format.</summary>

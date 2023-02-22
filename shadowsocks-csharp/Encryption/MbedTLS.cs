@@ -31,16 +31,13 @@ namespace Shadowsocks.Encryption
 
         public class HMAC_MD5 : HMAC
         {
-            byte[] key;
+            readonly byte[] key;
 
-            public HMAC_MD5(byte[] key)
-            {
-                this.key = key;
-            }
+            public HMAC_MD5(byte[] key) => this.key = key;
 
             public byte[] ComputeHash(byte[] buffer, int offset, int count)
             {
-                byte[] output = new byte[64];
+                var output = new byte[64];
                 ss_hmac_ex(MBEDTLS_MD_MD5, key, key.Length, buffer, offset, count, output);
                 return output;
             }
@@ -48,16 +45,13 @@ namespace Shadowsocks.Encryption
 
         public class HMAC_SHA1 : HMAC
         {
-            byte[] key;
+            readonly byte[] key;
 
-            public HMAC_SHA1(byte[] key)
-            {
-                this.key = key;
-            }
+            public HMAC_SHA1(byte[] key) => this.key = key;
 
             public byte[] ComputeHash(byte[] buffer, int offset, int count)
             {
-                byte[] output = new byte[64];
+                var output = new byte[64];
                 ss_hmac_ex(MBEDTLS_MD_SHA1, key, key.Length, buffer,offset, count, output);
                 return output;
             }
@@ -65,13 +59,13 @@ namespace Shadowsocks.Encryption
 
         static MbedTLS()
         {
-            string path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            string runningPath = Path.Combine(new Uri(path).LocalPath, @"temp"); // Path.GetTempPath();
+            var path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var runningPath = Path.Combine(new Uri(path).LocalPath, @"temp"); // Path.GetTempPath();
             if (!Directory.Exists(runningPath))
             {
                 Directory.CreateDirectory(runningPath);
             }
-            string dllPath = Path.Combine(runningPath, "libsscrypto.dll");
+            var dllPath = Path.Combine(runningPath, "libsscrypto.dll");
             try
             {
                 if (IntPtr.Size == 4)
@@ -90,26 +84,26 @@ namespace Shadowsocks.Encryption
             {
                 Logging.LogUsefulException(e);
             }
-            IntPtr module = LoadLibrary(dllPath);
+            var module = LoadLibrary(dllPath);
         }
 
         public static byte[] MD5(byte[] input)
         {
-            byte[] output = new byte[16];
+            var output = new byte[16];
             md5(input, input.Length, output);
             return output;
         }
 
         public static byte[] SHA1(byte[] input)
         {
-            byte[] output = new byte[20];
+            var output = new byte[20];
             ss_md(MBEDTLS_MD_SHA1, input, 0, input.Length, output);
             return output;
         }
 
         public static byte[] SHA512(byte[] input)
         {
-            byte[] output = new byte[64];
+            var output = new byte[64];
             ss_md(MBEDTLS_MD_SHA512, input, 0, input.Length, output);
             return output;
         }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Text;
+﻿using System.Net;
 
 namespace Shadowsocks.Model
 {
@@ -28,16 +25,13 @@ namespace Shadowsocks.Model
 
     public class HostMap
     {
-        Dictionary<string, HostNode> root = new Dictionary<string, HostNode>();
-        IPSegment ips = new IPSegment("remoteproxy");
+        readonly Dictionary<string, HostNode> root = new();
+        readonly IPSegment ips = new("remoteproxy");
 
-        static HostMap instance = new HostMap();
+        static HostMap instance = new();
         const string HOST_FILENAME = "user.rule";
 
-        public static HostMap Instance()
-        {
-            return instance;
-        }
+        public static HostMap Instance() => instance;
 
         public void Clear(HostMap newInstance)
         {
@@ -53,10 +47,9 @@ namespace Shadowsocks.Model
 
         public void AddHost(string host, string addr)
         {
-            IPAddress ip_addr = null;
-            if (IPAddress.TryParse(host, out ip_addr))
+            if (IPAddress.TryParse(host, out _))
             {
-                string[] addr_parts = addr.Split(new char[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
+                var addr_parts = addr.Split(new[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
                 if (addr_parts.Length >= 2)
                 {
                     ips.insert(new IPAddressCmp(host), new IPAddressCmp(addr_parts[0]), addr_parts[1]);
@@ -64,16 +57,16 @@ namespace Shadowsocks.Model
                 }
             }
 
-            string[] parts = host.Split('.');
-            Dictionary<string, HostNode> node = root;
-            bool include_sub = false;
-            int end = 0;
+            var parts = host.Split('.');
+            var node = root;
+            var include_sub = false;
+            var end = 0;
             if (parts[0].Length == 0)
             {
                 end = 1;
                 include_sub = true;
             }
-            for (int i = parts.Length - 1; i > end; --i)
+            for (var i = parts.Length - 1; i > end; --i)
             {
                 if (!node.ContainsKey(parts[i]))
                 {
@@ -90,10 +83,10 @@ namespace Shadowsocks.Model
 
         public bool GetHost(string host, out string addr)
         {
-            string[] parts = host.Split('.');
-            Dictionary<string, HostNode> node = root;
+            var parts = host.Split('.');
+            var node = root;
             addr = null;
-            for (int i = parts.Length - 1; i >= 0; --i)
+            for (var i = parts.Length - 1; i >= 0; --i)
             {
                 if (!node.ContainsKey(parts[i]))
                 {
@@ -120,33 +113,31 @@ namespace Shadowsocks.Model
 
         public bool GetIP(IPAddress ip, out string addr)
         {
-            string host = ip.ToString();
+            var host = ip.ToString();
             addr = ips.Get(new IPAddressCmp(host)) as string;
             return addr != null;
         }
 
         public bool LoadHostFile()
         {
-            string filename = HOST_FILENAME;
-            string absFilePath = System.IO.Path.Combine(System.Windows.Forms.Application.StartupPath, filename);
-            if (System.IO.File.Exists(absFilePath))
+            var filename = HOST_FILENAME;
+            var absFilePath = Path.Combine(Application.StartupPath, filename);
+            if (File.Exists(absFilePath))
             {
                 try
                 {
-                    using (System.IO.StreamReader stream = System.IO.File.OpenText(absFilePath))
+                    using var stream = File.OpenText(absFilePath);
+                    while (true)
                     {
-                        while (true)
-                        {
-                            string line = stream.ReadLine();
-                            if (line == null)
-                                break;
-                            if (line.Length > 0 && line.StartsWith("#"))
-                                continue;
-                            string[] parts = line.Split(new char[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
-                            if (parts.Length < 2)
-                                continue;
-                            AddHost(parts[0], parts[1]);
-                        }
+                        var line = stream.ReadLine();
+                        if (line == null)
+                            break;
+                        if (line.Length > 0 && line.StartsWith("#"))
+                            continue;
+                        var parts = line.Split(new[] { ' ', '\t', }, 2, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length < 2)
+                            continue;
+                        AddHost(parts[0], parts[1]);
                     }
                     return true;
                 }

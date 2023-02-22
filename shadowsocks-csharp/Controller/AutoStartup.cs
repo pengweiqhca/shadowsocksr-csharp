@@ -6,15 +6,15 @@ namespace Shadowsocks.Controller
 {
     class AutoStartup
     {
-        static string Key = "ShadowsocksR_" + Application.StartupPath.GetHashCode();
-        static string RegistryRunPath = (IntPtr.Size == 4 ? @"Software\Microsoft\Windows\CurrentVersion\Run" : @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run");
+        static readonly string Key = $"ShadowsocksR_{Application.StartupPath.GetHashCode()}";
+        static readonly string RegistryRunPath = IntPtr.Size == 4 ? @"Software\Microsoft\Windows\CurrentVersion\Run" : @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run";
 
         public static bool Set(bool enabled)
         {
             RegistryKey runKey = null;
             try
             {
-                string path = Util.Utils.GetExecutablePath();
+                var path = Util.Utils.GetExecutablePath();
                 runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
                 if (enabled)
                 {
@@ -50,11 +50,11 @@ namespace Shadowsocks.Controller
 
         public static bool Switch()
         {
-            bool enabled = !Check();
+            var enabled = !Check();
             RegistryKey runKey = null;
             try
             {
-                string path = Util.Utils.GetExecutablePath();
+                var path = Util.Utils.GetExecutablePath();
                 runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
                 if (enabled)
                 {
@@ -93,11 +93,11 @@ namespace Shadowsocks.Controller
             RegistryKey runKey = null;
             try
             {
-                string path = Util.Utils.GetExecutablePath();
+                var path = Util.Utils.GetExecutablePath();
                 runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, false);
-                string[] runList = runKey.GetValueNames();
+                var runList = runKey.GetValueNames();
                 runKey.Close();
-                foreach (string item in runList)
+                foreach (var item in runList)
                 {
                     if (item.Equals(Key))
                         return true;

@@ -1,11 +1,5 @@
-﻿using System.IO;
-using Shadowsocks.Model;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
+﻿using Shadowsocks.Model;
 using System.Net.Sockets;
-using System.Net;
 
 namespace Shadowsocks.Controller
 {
@@ -28,14 +22,14 @@ namespace Shadowsocks.Controller
         private List<Listener> _port_map_listener;
         private PACServer _pacServer;
         private Configuration _config;
-        private ServerTransferTotal _transfer;
+        private readonly ServerTransferTotal _transfer;
         public IPRangeSet _rangeSet;
 #if !_CONSOLE
         private HttpProxyRunner polipoRunner;
 #endif
         private GFWListUpdater gfwListUpdater;
-        private bool stopped = false;
-        private bool firstRun = true;
+        private bool stopped;
+        private readonly bool firstRun = true;
 
 
         public class PathEventArgs : EventArgs
@@ -64,11 +58,11 @@ namespace Shadowsocks.Controller
             _config = Configuration.Load();
             _transfer = ServerTransferTotal.Load();
 
-            foreach (Server server in _config.configs)
+            foreach (var server in _config.configs)
             {
                 if (_transfer.servers.ContainsKey(server.server))
                 {
-                    ServerSpeedLog log = new ServerSpeedLog(((ServerTrans)_transfer.servers[server.server]).totalUploadBytes, ((ServerTrans)_transfer.servers[server.server]).totalDownloadBytes);
+                    var log = new ServerSpeedLog(((ServerTrans)_transfer.servers[server.server]).totalUploadBytes, ((ServerTrans)_transfer.servers[server.server]).totalDownloadBytes);
                     server.SetServerSpeedLog(log);
                 }
             }
@@ -81,10 +75,7 @@ namespace Shadowsocks.Controller
 
         protected void ReportError(Exception e)
         {
-            if (Errored != null)
-            {
-                Errored(this, new ErrorEventArgs(e));
-            }
+            Errored?.Invoke(this, new ErrorEventArgs(e));
         }
 
         public void ReloadIPRange()
@@ -98,19 +89,13 @@ namespace Shadowsocks.Controller
         }
 
         // always return copy
-        public Configuration GetConfiguration()
-        {
-            return Configuration.Load();
-        }
+        public Configuration GetConfiguration() => Configuration.Load();
 
-        public Configuration GetCurrentConfiguration()
-        {
-            return _config;
-        }
+        public Configuration GetCurrentConfiguration() => _config;
 
         private int FindFirstMatchServer(Server server, List<Server> servers)
         {
-            for (int i = 0; i < servers.Count; ++i)
+            for (var i = 0; i < servers.Count; ++i)
             {
                 if (server.isMatchServer(servers[i]))
                 {
@@ -124,7 +109,7 @@ namespace Shadowsocks.Controller
         {
             if (servers != null)
             {
-                for (int j = 0; j < servers.Count; ++j)
+                for (var j = 0; j < servers.Count; ++j)
                 {
                     if (FindFirstMatchServer(servers[j], mergeConfig.configs) == -1)
                     {
@@ -136,23 +121,23 @@ namespace Shadowsocks.Controller
 
         public List<Server> MergeConfiguration(Configuration mergeConfig, List<Server> servers)
         {
-            List<Server> missingServers = new List<Server>();
+            var missingServers = new List<Server>();
             if (servers != null)
             {
-                for (int j = 0; j < servers.Count; ++j)
+                for (var j = 0; j < servers.Count; ++j)
                 {
-                    int i = FindFirstMatchServer(servers[j], mergeConfig.configs);
+                    var i = FindFirstMatchServer(servers[j], mergeConfig.configs);
                     if (i != -1)
                     {
-                        bool enable = servers[j].enable;
+                        var enable = servers[j].enable;
                         servers[j].CopyServer(mergeConfig.configs[i]);
                         servers[j].enable = enable;
                     }
                 }
             }
-            for (int i = 0; i < mergeConfig.configs.Count; ++i)
+            for (var i = 0; i < mergeConfig.configs.Count; ++i)
             {
-                int j = FindFirstMatchServer(mergeConfig.configs[i], servers);
+                var j = FindFirstMatchServer(mergeConfig.configs[i], servers);
                 if (j == -1)
                 {
                     missingServers.Add(mergeConfig.configs[i]);
@@ -163,7 +148,7 @@ namespace Shadowsocks.Controller
 
         public Configuration MergeGetConfiguration(Configuration mergeConfig)
         {
-            Configuration ret = Configuration.Load();
+            var ret = Configuration.Load();
             if (mergeConfig != null)
             {
                 MergeConfiguration(mergeConfig, ret.configs);
@@ -179,7 +164,7 @@ namespace Shadowsocks.Controller
 
         public bool SaveServersConfig(string config)
         {
-            Configuration new_cfg = Configuration.Load(config);
+            var new_cfg = Configuration.Load(config);
             if (new_cfg != null)
             {
                 SaveServersConfig(new_cfg);
@@ -190,9 +175,9 @@ namespace Shadowsocks.Controller
 
         public void SaveServersConfig(Configuration config)
         {
-            List<Server> missingServers = MergeConfiguration(_config, config.configs);
+            var missingServers = MergeConfiguration(_config, config.configs);
             _config.CopyFrom(config);
-            foreach (Server s in missingServers)
+            foreach (var s in missingServers)
             {
                 s.GetConnections().CloseAll();
             }
@@ -219,7 +204,7 @@ namespace Shadowsocks.Controller
                     }
                     else
                     {
-                        int index = _config.index + 1;
+                        var index = _config.index + 1;
                         if (index < 0 || index > _config.configs.Count)
                             index = _config.configs.Count;
                         _config.configs.Insert(index, server);
@@ -233,30 +218,21 @@ namespace Shadowsocks.Controller
                     return false;
                 }
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         public void ToggleMode(ProxyMode mode)
         {
             _config.sysProxyMode = (int)mode;
             SaveConfig(_config);
-            if (ToggleModeChanged != null)
-            {
-                ToggleModeChanged(this, new EventArgs());
-            }
+            ToggleModeChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public void ToggleRuleMode(int mode)
         {
             _config.proxyRuleMode = mode;
             SaveConfig(_config);
-            if (ToggleRuleModeChanged != null)
-            {
-                ToggleRuleModeChanged(this, new EventArgs());
-            }
+            ToggleRuleModeChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public void ToggleSelectRandom(bool enabled)
@@ -287,22 +263,16 @@ namespace Shadowsocks.Controller
 
             if (_port_map_listener != null)
             {
-                foreach (Listener l in _port_map_listener)
+                foreach (var l in _port_map_listener)
                 {
                     l.Stop();
                 }
                 _port_map_listener = null;
             }
-            if (_listener != null)
-            {
-                _listener.Stop();
-            }
+            _listener?.Stop();
 #if !_CONSOLE
-            if (polipoRunner != null)
-            {
-                polipoRunner.Stop();
-            }
-            if (_config.sysProxyMode != (int)ProxyMode.NoModify && _config.sysProxyMode != (int)ProxyMode.Direct)
+            polipoRunner?.Stop();
+            if (_config.sysProxyMode is not (int)ProxyMode.NoModify and not (int)ProxyMode.Direct)
             {
                 SystemProxy.Update(_config, true);
             }
@@ -313,7 +283,7 @@ namespace Shadowsocks.Controller
         public void ClearTransferTotal(string server_addr)
         {
             _transfer.Clear(server_addr);
-            foreach (Server server in _config.configs)
+            foreach (var server in _config.configs)
             {
                 if (server.server == server_addr)
                 {
@@ -327,20 +297,14 @@ namespace Shadowsocks.Controller
 
         public void TouchPACFile()
         {
-            string pacFilename = _pacServer.TouchPACFile();
-            if (PACFileReadyToOpen != null)
-            {
-                PACFileReadyToOpen(this, new PathEventArgs() { Path = pacFilename });
-            }
+            var pacFilename = _pacServer.TouchPACFile();
+            PACFileReadyToOpen?.Invoke(this, new PathEventArgs() { Path = pacFilename });
         }
 
         public void TouchUserRuleFile()
         {
-            string userRuleFilename = _pacServer.TouchUserRuleFile();
-            if (UserRuleFileReadyToOpen != null)
-            {
-                UserRuleFileReadyToOpen(this, new PathEventArgs() { Path = userRuleFilename });
-            }
+            var userRuleFilename = _pacServer.TouchUserRuleFile();
+            UserRuleFileReadyToOpen?.Invoke(this, new PathEventArgs() { Path = userRuleFilename });
         }
 
         public void UpdatePACFromGFWList()
@@ -353,17 +317,14 @@ namespace Shadowsocks.Controller
 
         public void UpdatePACFromOnlinePac(string url)
         {
-            if (gfwListUpdater != null)
-            {
-                gfwListUpdater.UpdatePACFromGFWList(_config, url);
-            }
+            gfwListUpdater?.UpdatePACFromGFWList(_config, url);
         }
 
         protected void Reload()
         {
             if (_port_map_listener != null)
             {
-                foreach (Listener l in _port_map_listener)
+                foreach (var l in _port_map_listener)
                 {
                     l.Stop();
                 }
@@ -374,15 +335,12 @@ namespace Shadowsocks.Controller
             _config.FlushPortMapCache();
             ReloadIPRange();
 
-            HostMap hostMap = new HostMap();
+            var hostMap = new HostMap();
             hostMap.LoadHostFile();
             HostMap.Instance().Clear(hostMap);
 
 #if !_CONSOLE
-            if (polipoRunner == null)
-            {
-                polipoRunner = new HttpProxyRunner();
-            }
+            polipoRunner ??= new HttpProxyRunner();
 #endif
             if (_pacServer == null)
             {
@@ -401,15 +359,15 @@ namespace Shadowsocks.Controller
             // or bind will fail when switching bind address from 0.0.0.0 to 127.0.0.1
             // though UseShellExecute is set to true now
             // http://stackoverflow.com/questions/10235093/socket-doesnt-close-after-application-exits-if-a-launched-process-is-open
-            bool _firstRun = firstRun;
-            for (int i = 1; i <= 5; ++i)
+            var _firstRun = firstRun;
+            for (var i = 1; i <= 5; ++i)
             {
                 _firstRun = false;
                 try
                 {
                     if (_listener != null && !_listener.isConfigChange(_config))
                     {
-                        Local local = new Local(_config, _transfer, _rangeSet);
+                        var local = new Local(_config, _transfer, _rangeSet);
                         _listener.GetServices()[0] = local;
 #if !_CONSOLE
                         if (polipoRunner.HasExited())
@@ -434,14 +392,16 @@ namespace Shadowsocks.Controller
                         polipoRunner.Start(_config);
 #endif
 
-                        Local local = new Local(_config, _transfer, _rangeSet);
-                        List<Listener.Service> services = new List<Listener.Service>();
-                        services.Add(local);
-                        services.Add(_pacServer);
-                        services.Add(new APIServer(this, _config));
+                        var local = new Local(_config, _transfer, _rangeSet);
+                        var services = new List<Listener.Service>
+                        {
+                            local,
+                            _pacServer,
+                            new APIServer(this, _config),
 #if !_CONSOLE
-                        services.Add(new HttpPortForwarder(polipoRunner.RunningPort, _config));
+                            new HttpPortForwarder(polipoRunner.RunningPort, _config)
 #endif
+                        };
                         _listener = new Listener(services);
                         _listener.Start(_config, 0);
                     }
@@ -451,13 +411,9 @@ namespace Shadowsocks.Controller
                 {
                     // translate Microsoft language into human language
                     // i.e. An attempt was made to access a socket in a way forbidden by its access permissions => Port already in use
-                    if (e is SocketException)
+                    if (e is SocketException { SocketErrorCode: SocketError.AccessDenied } se)
                     {
-                        SocketException se = (SocketException)e;
-                        if (se.SocketErrorCode == SocketError.AccessDenied)
-                        {
-                            e = new Exception(I18N.GetString("Port already in use") + string.Format(" {0}", _config.localPort), e);
-                        }
+                        e = new Exception($"{I18N.GetString("Port already in use")} {_config.localPort}", se);
                     }
                     Logging.LogUsefulException(e);
                     if (!_firstRun)
@@ -465,10 +421,7 @@ namespace Shadowsocks.Controller
                         ReportError(e);
                         break;
                     }
-                    else
-                    {
-                        Thread.Sleep(1000 * i * i);
-                    }
+                    Thread.Sleep(1000 * i * i);
                     if (_listener != null)
                     {
                         _listener.Stop();
@@ -478,14 +431,16 @@ namespace Shadowsocks.Controller
             }
 
             _port_map_listener = new List<Listener>();
-            foreach (KeyValuePair<int, PortMapConfigCache> pair in _config.GetPortMapCache())
+            foreach (var pair in _config.GetPortMapCache())
             {
                 try
                 {
-                    Local local = new Local(_config, _transfer, _rangeSet);
-                    List<Listener.Service> services = new List<Listener.Service>();
-                    services.Add(local);
-                    Listener listener = new Listener(services);
+                    var local = new Local(_config, _transfer, _rangeSet);
+                    var services = new List<Listener.Service>
+                    {
+                        local
+                    };
+                    var listener = new Listener(services);
                     listener.Start(_config, pair.Key);
                     _port_map_listener.Add(listener);
                 }
@@ -493,20 +448,16 @@ namespace Shadowsocks.Controller
                 {
                     // translate Microsoft language into human language
                     // i.e. An attempt was made to access a socket in a way forbidden by its access permissions => Port already in use
-                    if (e is SocketException)
+                    if (e is SocketException { SocketErrorCode: SocketError.AccessDenied } se)
                     {
-                        SocketException se = (SocketException)e;
-                        if (se.SocketErrorCode == SocketError.AccessDenied)
-                        {
-                            e = new Exception(I18N.GetString("Port already in use") + string.Format(" {0}", pair.Key), e);
-                        }
+                        e = new Exception($"{I18N.GetString("Port already in use")} {pair.Key}", se);
                     }
                     Logging.LogUsefulException(e);
                     ReportError(e);
                 }
             }
 
-            ConfigChanged?.Invoke(this, new EventArgs());
+            ConfigChanged?.Invoke(this, EventArgs.Empty);
 
             UpdateSystemProxy();
             Util.Utils.ReleaseMemory();
@@ -537,22 +488,17 @@ namespace Shadowsocks.Controller
 
         private void pacServer_PACUpdateCompleted(object sender, GFWListUpdater.ResultEventArgs e)
         {
-            if (UpdatePACFromGFWListCompleted != null)
-                UpdatePACFromGFWListCompleted(sender, e);
+            UpdatePACFromGFWListCompleted?.Invoke(sender, e);
         }
 
         private void pacServer_PACUpdateError(object sender, ErrorEventArgs e)
         {
-            if (UpdatePACFromGFWListError != null)
-                UpdatePACFromGFWListError(sender, e);
+            UpdatePACFromGFWListError?.Invoke(sender, e);
         }
 
         public void ShowConfigForm(int index)
         {
-            if (ShowConfigFormEvent != null)
-            {
-                ShowConfigFormEvent(index, new EventArgs());
-            }
+            ShowConfigFormEvent?.Invoke(index, EventArgs.Empty);
         }
 
         /// <summary>
@@ -560,10 +506,10 @@ namespace Shadowsocks.Controller
         /// </summary>
         public void DisconnectAllConnections()
         {
-            Configuration config = GetCurrentConfiguration();
-            for (int id = 0; id < config.configs.Count; ++id)
+            var config = GetCurrentConfiguration();
+            for (var id = 0; id < config.configs.Count; ++id)
             {
-                Server server = config.configs[id];
+                var server = config.configs[id];
                 server.GetConnections().CloseAll();
             }
         }

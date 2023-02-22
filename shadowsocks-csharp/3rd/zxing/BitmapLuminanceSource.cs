@@ -60,13 +60,13 @@ namespace ZXing
             {
                // old slow way for unsupported bit depth
                Color c;
-               for (int y = 0; y < height; y++)
+               for (var y = 0; y < height; y++)
                {
-                  int offset = y*width;
-                  for (int x = 0; x < width; x++)
+                  var offset = y*width;
+                  for (var x = 0; x < width; x++)
                   {
                      c = bitmap.GetPixel(x, y);
-                     luminances[offset + x] = (byte)((RChannelWeight * c.R + GChannelWeight * c.G + BChannelWeight * c.B) >> ChannelWeight);
+                     luminances[offset + x] = (byte)(RChannelWeight * c.R + GChannelWeight * c.G + BChannelWeight * c.B >> ChannelWeight);
                   }
                }
             }
@@ -82,12 +82,11 @@ namespace ZXing
                for (var index = 0; index < bitmap.Palette.Entries.Length; index++)
                {
                   var color = bitmap.Palette.Entries[index];
-                  luminancePalette[index] = (byte) ((RChannelWeight*color.R +
-                                                     GChannelWeight*color.G +
-                                                     BChannelWeight*color.B) >> ChannelWeight);
+                  luminancePalette[index] = (byte) (RChannelWeight*color.R +
+                      GChannelWeight*color.G +
+                      BChannelWeight*color.B >> ChannelWeight);
                }
-               if (bitmap.PixelFormat == PixelFormat.Format32bppArgb ||
-                   bitmap.PixelFormat == PixelFormat.Format32bppPArgb)
+               if (bitmap.PixelFormat is PixelFormat.Format32bppArgb or PixelFormat.Format32bppPArgb)
                {
                   pixelWidth = 40;
                }
@@ -98,7 +97,7 @@ namespace ZXing
                }
 #endif
 
-               for (int y = 0; y < height; y++)
+               for (var y = 0; y < height; y++)
                {
                   // copy a scanline not the whole bitmap because of memory usage
                   Marshal.Copy(ptrInBitmap, buffer, 0, stride);
@@ -112,17 +111,17 @@ namespace ZXing
                   {
 #if !WindowsCE
                      case 0:
-                        for (int x = 0; x*8 < width; x++)
+                        for (var x = 0; x*8 < width; x++)
                         {
-                           for (int subX = 0; subX < 8 && 8*x + subX < width; subX++)
+                           for (var subX = 0; subX < 8 && 8*x + subX < width; subX++)
                            {
-                              var index = (buffer[x] >> (7 - subX)) & 1;
+                              var index = buffer[x] >> 7 - subX & 1;
                               luminances[offset + 8*x + subX] = luminancePalette[index];
                            }
                         }
                         break;
                      case 1:
-                        for (int x = 0; x < width; x++)
+                        for (var x = 0; x < width; x++)
                         {
                            luminances[offset + x] = luminancePalette[buffer[x]];
                         }
@@ -132,19 +131,19 @@ namespace ZXing
                         // should be RGB565 or RGB555, assume RGB565
                         {
                            var maxIndex = 2*width;
-                           for (int index = 0; index < maxIndex; index += 2)
+                           for (var index = 0; index < maxIndex; index += 2)
                            {
                               var byte1 = buffer[index];
                               var byte2 = buffer[index + 1];
 
                               var b5 = byte1 & 0x1F;
-                              var g5 = (((byte1 & 0xE0) >> 5) | ((byte2 & 0x03) << 3)) & 0x1F;
-                              var r5 = (byte2 >> 2) & 0x1F;
-                              var r8 = (r5*527 + 23) >> 6;
-                              var g8 = (g5*527 + 23) >> 6;
-                              var b8 = (b5*527 + 23) >> 6;
+                              var g5 = ((byte1 & 0xE0) >> 5 | (byte2 & 0x03) << 3) & 0x1F;
+                              var r5 = byte2 >> 2 & 0x1F;
+                              var r8 = r5*527 + 23 >> 6;
+                              var g8 = g5*527 + 23 >> 6;
+                              var b8 = b5*527 + 23 >> 6;
 
-                              luminances[offset] = (byte)((RChannelWeight * r8 + GChannelWeight * g8 + BChannelWeight * b8)  >> ChannelWeight);
+                              luminances[offset] = (byte)(RChannelWeight * r8 + GChannelWeight * g8 + BChannelWeight * b8  >> ChannelWeight);
                               offset++;
                            }
                         }
@@ -152,11 +151,11 @@ namespace ZXing
                      case 3:
                         {
                            var maxIndex = width*3;
-                           for (int x = 0; x < maxIndex; x += 3)
+                           for (var x = 0; x < maxIndex; x += 3)
                            {
-                              var luminance = (byte) ((BChannelWeight*buffer[x] +
-                                                       GChannelWeight*buffer[x + 1] +
-                                                       RChannelWeight*buffer[x + 2]) >> ChannelWeight);
+                              var luminance = (byte) (BChannelWeight*buffer[x] +
+                                  GChannelWeight*buffer[x + 1] +
+                                  RChannelWeight*buffer[x + 2] >> ChannelWeight);
                               luminances[offset] = luminance;
                               offset++;
                            }
@@ -166,11 +165,11 @@ namespace ZXing
                         // 4 bytes without alpha channel value
                         {
                            var maxIndex = 4*width;
-                           for (int x = 0; x < maxIndex; x += 4)
+                           for (var x = 0; x < maxIndex; x += 4)
                            {
-                              var luminance = (byte) ((BChannelWeight*buffer[x] +
-                                                       GChannelWeight*buffer[x + 1] +
-                                                       RChannelWeight*buffer[x + 2]) >> ChannelWeight);
+                              var luminance = (byte) (BChannelWeight*buffer[x] +
+                                  GChannelWeight*buffer[x + 1] +
+                                  RChannelWeight*buffer[x + 2] >> ChannelWeight);
 
                               luminances[offset] = luminance;
                               offset++;
@@ -183,17 +182,17 @@ namespace ZXing
                         // the view
                         {
                            var maxIndex = 4*width;
-                           for (int x = 0; x < maxIndex; x += 4)
+                           for (var x = 0; x < maxIndex; x += 4)
                            {
-                              var luminance = (byte) ((BChannelWeight*buffer[x] +
-                                                       GChannelWeight*buffer[x + 1] +
-                                                       RChannelWeight*buffer[x + 2]) >> ChannelWeight);
+                              var luminance = (byte) (BChannelWeight*buffer[x] +
+                                  GChannelWeight*buffer[x + 1] +
+                                  RChannelWeight*buffer[x + 2] >> ChannelWeight);
 
                               // calculating the resulting luminance based upon a white background
                               // var alpha = buffer[x * pixelWidth + 3] / 255.0;
                               // luminance = (byte)(luminance * alpha + 255 * (1 - alpha));
                               var alpha = buffer[x + 3];
-                              luminance = (byte) (((luminance*alpha) >> 8) + (255*(255 - alpha) >> 8) + 1);
+                              luminance = (byte) ((luminance*alpha >> 8) + (255*(255 - alpha) >> 8) + 1);
                               luminances[offset] = luminance;
                               offset++;
                            }
@@ -203,11 +202,11 @@ namespace ZXing
                         // CMYK color space
                         {
                            var maxIndex = 4 * width;
-                           for (int x = 0; x < maxIndex; x += 4)
+                           for (var x = 0; x < maxIndex; x += 4)
                            {
-                              var luminance = (byte) (255 - ((BChannelWeight*buffer[x] +
-                                                              GChannelWeight*buffer[x + 1] +
-                                                              RChannelWeight*buffer[x + 2]) >> ChannelWeight));
+                              var luminance = (byte) (255 - (BChannelWeight*buffer[x] +
+                                  GChannelWeight*buffer[x + 1] +
+                                  RChannelWeight*buffer[x + 2] >> ChannelWeight));
                               // Ignore value of k at the moment
                               luminances[offset] = luminance;
                               offset++;
@@ -234,9 +233,6 @@ namespace ZXing
       /// <param name="width">The width.</param>
       /// <param name="height">The height.</param>
       /// <returns></returns>
-      protected override LuminanceSource CreateLuminanceSource(byte[] newLuminances, int width, int height)
-      {
-         return new BitmapLuminanceSource(width, height) { luminances = newLuminances };
-      }
+      protected override LuminanceSource CreateLuminanceSource(byte[] newLuminances, int width, int height) => new BitmapLuminanceSource(width, height) { luminances = newLuminances };
    }
 }

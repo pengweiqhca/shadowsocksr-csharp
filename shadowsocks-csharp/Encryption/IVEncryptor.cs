@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Shadowsocks.Model;
 using System.Security.Cryptography;
 using System.Text;
-using Shadowsocks.Model;
 
 namespace Shadowsocks.Encryption
 {
@@ -11,13 +9,13 @@ namespace Shadowsocks.Encryption
     {
         protected Dictionary<string, EncryptorInfo> ciphers;
 
-        private static readonly LRUCache<string, byte[]> CachedKeys = new LRUCache<string, byte[]>(600);
+        private static readonly LRUCache<string, byte[]> CachedKeys = new(600);
         protected byte[] _encryptIV;
         protected byte[] _decryptIV;
         protected int _decryptIVReceived;
         protected bool _encryptIVSent;
-        protected int _encryptIVOffset = 0;
-        protected int _decryptIVOffset = 0;
+        protected int _encryptIVOffset;
+        protected int _decryptIVOffset;
         protected string _method;
         protected int _cipher;
         protected EncryptorInfo _cipherInfo;
@@ -48,26 +46,20 @@ namespace Shadowsocks.Encryption
             }
             return false;
         }
-        public override byte[] getIV()
-        {
-            return _iv;
-        }
+        public override byte[] getIV() => _iv;
         public override byte[] getKey()
         {
-            byte[] key = (byte[])_key.Clone();
+            var key = (byte[])_key.Clone();
             Array.Resize(ref key, keyLen);
             return key;
         }
-        public override EncryptorInfo getInfo()
-        {
-            return _cipherInfo;
-        }
+        public override EncryptorInfo getInfo() => _cipherInfo;
 
         protected void InitKey(string method, string password)
         {
             method = method.ToLower();
             _method = method;
-            string k = method + ":" + password;
+            var k = $"{method}:{password}";
             ciphers = getCiphers();
             _cipherInfo = ciphers[_method];
             _cipher = _cipherInfo.type;
@@ -83,25 +75,24 @@ namespace Shadowsocks.Encryption
                 {
                     if (!CachedKeys.ContainsKey(k))
                     {
-                        byte[] passbuf = Encoding.UTF8.GetBytes(password);
+                        var passbuf = Encoding.UTF8.GetBytes(password);
                         _key = new byte[32];
-                        byte[] iv = new byte[16];
+                        var iv = new byte[16];
                         bytesToKey(passbuf, _key);
                         CachedKeys.Set(k, _key);
                         CachedKeys.Sweep();
                     }
                 }
             }
-            if (_key == null)
-                _key = CachedKeys.Get(k);
+            _key ??= CachedKeys.Get(k);
             Array.Resize(ref _iv, ivLen);
             randBytes(_iv, ivLen);
         }
 
         protected void bytesToKey(byte[] password, byte[] key)
         {
-            byte[] result = new byte[password.Length + 16];
-            int i = 0;
+            var result = new byte[password.Length + 16];
+            var i = 0;
             byte[] md5sum = null;
             while (i < key.Length)
             {
@@ -122,7 +113,7 @@ namespace Shadowsocks.Encryption
 
         protected static void randBytes(byte[] buf, int length)
         {
-            byte[] temp = new byte[length];
+            var temp = new byte[length];
             RandomNumberGenerator.Create().GetBytes(temp);
             temp.CopyTo(buf, 0);
         }
@@ -169,13 +160,10 @@ namespace Shadowsocks.Encryption
         {
             if (_decryptIVReceived <= ivLen)
             {
-                int start_pos = ivLen;
+                var start_pos = ivLen;
                 if (_decryptIVReceived + length < ivLen)
                 {
-                    if (_decryptIV == null)
-                    {
-                        _decryptIV = new byte[ivLen];
-                    }
+                    _decryptIV ??= new byte[ivLen];
                     Buffer.BlockCopy(buf, 0, _decryptIV, _decryptIVReceived, length);
                     outlength = 0;
                     _decryptIVReceived += length;
@@ -189,7 +177,7 @@ namespace Shadowsocks.Encryption
                 else
                 {
                     start_pos = ivLen - _decryptIVReceived;
-                    byte[] temp_buf = new byte[ivLen];
+                    var temp_buf = new byte[ivLen];
                     Buffer.BlockCopy(_decryptIV, 0, temp_buf, 0, _decryptIVReceived);
                     Buffer.BlockCopy(buf, 0, temp_buf, _decryptIVReceived, start_pos);
                     initCipher(temp_buf, false);
@@ -235,25 +223,22 @@ namespace Shadowsocks.Encryption
             InitKey(method, password);
         }
 
-        private static Dictionary<string, EncryptorInfo> _ciphers = new Dictionary<string, EncryptorInfo> {
-                {"none", new EncryptorInfo(16, 0, true, 1)},
+        private static readonly Dictionary<string, EncryptorInfo> _ciphers = new()
+        {
+            {
+                "none", new EncryptorInfo(16, 0, true, 1)
+            },
         };
 
-        public static List<string> SupportedCiphers()
-        {
-            return new List<string>(_ciphers.Keys);
-        }
+        public static List<string> SupportedCiphers() => new(_ciphers.Keys);
 
-        protected override Dictionary<string, EncryptorInfo> getCiphers()
-        {
-            return _ciphers;
-        }
+        protected override Dictionary<string, EncryptorInfo> getCiphers() => _ciphers;
 
         protected override void cipherUpdate(bool isCipher, int length, byte[] buf, byte[] outbuf)
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(this.ToString());
+                throw new ObjectDisposedException(ToString());
             }
             Array.Copy(buf, outbuf, length);
         }

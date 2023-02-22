@@ -35,10 +35,7 @@ namespace ZXing.QrCode.Internal
       /// <summary>
       /// Initializes a new instance of the <see cref="Decoder"/> class.
       /// </summary>
-      public Decoder()
-      {
-         rsDecoder = new ReedSolomonDecoder(GenericGF.QR_CODE_FIELD_256);
-      }
+      public Decoder() => rsDecoder = new ReedSolomonDecoder(GenericGF.QR_CODE_FIELD_256);
 
       /// <summary>
       ///   <p>Convenience method that can decode a QR Code represented as a 2D array of booleans.
@@ -53,9 +50,9 @@ namespace ZXing.QrCode.Internal
       {
          var dimension = image.Length;
          var bits = new BitMatrix(dimension);
-         for (int i = 0; i < dimension; i++)
+         for (var i = 0; i < dimension; i++)
          {
-            for (int j = 0; j < dimension; j++)
+            for (var j = 0; j < dimension; j++)
             {
                bits[j, i] = image[i][j];
             }
@@ -120,38 +117,38 @@ namespace ZXing.QrCode.Internal
 
       private DecoderResult decode(BitMatrixParser parser, IDictionary<DecodeHintType, object> hints)
       {
-         Version version = parser.readVersion();
+         var version = parser.readVersion();
          if (version == null)
             return null;
          var formatinfo = parser.readFormatInformation();
          if (formatinfo == null)
             return null;
-         ErrorCorrectionLevel ecLevel = formatinfo.ErrorCorrectionLevel;
+         var ecLevel = formatinfo.ErrorCorrectionLevel;
 
          // Read codewords
-         byte[] codewords = parser.readCodewords();
+         var codewords = parser.readCodewords();
          if (codewords == null)
             return null;
          // Separate into data blocks
-         DataBlock[] dataBlocks = DataBlock.getDataBlocks(codewords, version, ecLevel);
+         var dataBlocks = DataBlock.getDataBlocks(codewords, version, ecLevel);
 
          // Count total number of data bytes
-         int totalBytes = 0;
+         var totalBytes = 0;
          foreach (var dataBlock in dataBlocks)
          {
             totalBytes += dataBlock.NumDataCodewords;
          }
-         byte[] resultBytes = new byte[totalBytes];
-         int resultOffset = 0;
+         var resultBytes = new byte[totalBytes];
+         var resultOffset = 0;
 
          // Error-correct and copy data blocks together into a stream of bytes
          foreach (var dataBlock in dataBlocks)
          {
-            byte[] codewordBytes = dataBlock.Codewords;
-            int numDataCodewords = dataBlock.NumDataCodewords;
+            var codewordBytes = dataBlock.Codewords;
+            var numDataCodewords = dataBlock.NumDataCodewords;
             if (!correctErrors(codewordBytes, numDataCodewords))
                return null;
-            for (int i = 0; i < numDataCodewords; i++)
+            for (var i = 0; i < numDataCodewords; i++)
             {
                resultBytes[resultOffset++] = codewordBytes[i];
             }
@@ -170,21 +167,21 @@ namespace ZXing.QrCode.Internal
       /// <returns></returns>
       private bool correctErrors(byte[] codewordBytes, int numDataCodewords)
       {
-         int numCodewords = codewordBytes.Length;
+         var numCodewords = codewordBytes.Length;
          // First read into an array of ints
-         int[] codewordsInts = new int[numCodewords];
-         for (int i = 0; i < numCodewords; i++)
+         var codewordsInts = new int[numCodewords];
+         for (var i = 0; i < numCodewords; i++)
          {
             codewordsInts[i] = codewordBytes[i] & 0xFF;
          }
-         int numECCodewords = codewordBytes.Length - numDataCodewords;
+         var numECCodewords = codewordBytes.Length - numDataCodewords;
 
          if (!rsDecoder.decode(codewordsInts, numECCodewords))
             return false;
 
          // Copy back into array of bytes -- only need to worry about the bytes that were data
          // We don't care about errors in the error-correction codewords
-         for (int i = 0; i < numDataCodewords; i++)
+         for (var i = 0; i < numDataCodewords; i++)
          {
             codewordBytes[i] = (byte)codewordsInts[i];
          }

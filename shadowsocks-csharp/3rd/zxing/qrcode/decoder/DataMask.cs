@@ -60,9 +60,9 @@ namespace ZXing.QrCode.Internal
       /// </param>
       internal void unmaskBitMatrix(BitMatrix bits, int dimension)
       {
-         for (int i = 0; i < dimension; i++)
+         for (var i = 0; i < dimension; i++)
          {
-            for (int j = 0; j < dimension; j++)
+            for (var j = 0; j < dimension; j++)
             {
                if (isMasked(i, j))
                {
@@ -81,9 +81,9 @@ namespace ZXing.QrCode.Internal
       /// </returns>
       internal static DataMask forReference(int reference)
       {
-         if (reference < 0 || reference > 7)
+         if (reference is < 0 or > 7)
          {
-            throw new System.ArgumentException();
+            throw new ArgumentException();
          }
          return DATA_MASKS[reference];
       }
@@ -91,46 +91,31 @@ namespace ZXing.QrCode.Internal
       /// <summary> 000: mask bits for which (x + y) mod 2 == 0</summary>
       private sealed class DataMask000 : DataMask
       {
-         internal override bool isMasked(int i, int j)
-         {
-            return ((i + j) & 0x01) == 0;
-         }
+         internal override bool isMasked(int i, int j) => (i + j & 0x01) == 0;
       }
 
       /// <summary> 001: mask bits for which x mod 2 == 0</summary>
       private sealed class DataMask001 : DataMask
       {
-         internal override bool isMasked(int i, int j)
-         {
-            return (i & 0x01) == 0;
-         }
+         internal override bool isMasked(int i, int j) => (i & 0x01) == 0;
       }
 
       /// <summary> 010: mask bits for which y mod 3 == 0</summary>
       private sealed class DataMask010 : DataMask
       {
-         internal override bool isMasked(int i, int j)
-         {
-            return j % 3 == 0;
-         }
+         internal override bool isMasked(int i, int j) => j % 3 == 0;
       }
 
       /// <summary> 011: mask bits for which (x + y) mod 3 == 0</summary>
       private sealed class DataMask011 : DataMask
       {
-         internal override bool isMasked(int i, int j)
-         {
-            return (i + j) % 3 == 0;
-         }
+         internal override bool isMasked(int i, int j) => (i + j) % 3 == 0;
       }
 
       /// <summary> 100: mask bits for which (x/2 + y/3) mod 2 == 0</summary>
       private sealed class DataMask100 : DataMask
       {
-         internal override bool isMasked(int i, int j)
-         {
-            return ((((int)((uint)i >> 1)) + (j / 3)) & 0x01) == 0;
-         }
+         internal override bool isMasked(int i, int j) => ((int)((uint)i >> 1) + j / 3 & 0x01) == 0;
       }
 
       /// <summary> 101: mask bits for which xy mod 2 + xy mod 3 == 0</summary>
@@ -138,8 +123,8 @@ namespace ZXing.QrCode.Internal
       {
          internal override bool isMasked(int i, int j)
          {
-            int temp = i * j;
-            return (temp & 0x01) + (temp % 3) == 0;
+            var temp = i * j;
+            return (temp & 0x01) + temp % 3 == 0;
          }
       }
 
@@ -148,18 +133,15 @@ namespace ZXing.QrCode.Internal
       {
          internal override bool isMasked(int i, int j)
          {
-            int temp = i * j;
-            return (((temp & 0x01) + (temp % 3)) & 0x01) == 0;
+            var temp = i * j;
+            return ((temp & 0x01) + temp % 3 & 0x01) == 0;
          }
       }
 
       /// <summary> 111: mask bits for which ((x+y)mod 2 + xy mod 3) mod 2 == 0</summary>
       private sealed class DataMask111 : DataMask
       {
-         internal override bool isMasked(int i, int j)
-         {
-            return ((((i + j) & 0x01) + ((i * j) % 3)) & 0x01) == 0;
-         }
+         internal override bool isMasked(int i, int j) => ((i + j & 0x01) + i * j % 3 & 0x01) == 0;
       }
    }
 }

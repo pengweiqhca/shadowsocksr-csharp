@@ -1,9 +1,9 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shadowsocks.Controller;
 using Shadowsocks.Encryption;
-using System.Threading;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace test
 {
@@ -24,52 +24,50 @@ namespace test
 
         private void RunEncryptionRound(IEncryptor encryptor, IEncryptor decryptor)
         {
-            byte[] plain = new byte[16384];
-            byte[] cipher = new byte[plain.Length + 16];
-            byte[] plain2 = new byte[plain.Length + 16];
-            int outLen = 0;
-            int outLen2 = 0;
+            var plain = new byte[16384];
+            var cipher = new byte[plain.Length + 16];
+            var plain2 = new byte[plain.Length + 16];
             var random = new Random();
             random.NextBytes(plain);
-            encryptor.Encrypt(plain, plain.Length, cipher, out outLen);
-            decryptor.Decrypt(cipher, outLen, plain2, out outLen2);
+            encryptor.Encrypt(plain, plain.Length, cipher, out var outLen);
+            decryptor.Decrypt(cipher, outLen, plain2, out var outLen2);
             Assert.AreEqual(plain.Length, outLen2);
-            for (int j = 0; j < plain.Length; j++)
+            for (var j = 0; j < plain.Length; j++)
             {
                 Assert.AreEqual(plain[j], plain2[j]);
             }
             encryptor.Encrypt(plain, 1000, cipher, out outLen);
             decryptor.Decrypt(cipher, outLen, plain2, out outLen2);
             Assert.AreEqual(1000, outLen2);
-            for (int j = 0; j < outLen2; j++)
+            for (var j = 0; j < outLen2; j++)
             {
                 Assert.AreEqual(plain[j], plain2[j]);
             }
             encryptor.Encrypt(plain, 12333, cipher, out outLen);
             decryptor.Decrypt(cipher, outLen, plain2, out outLen2);
             Assert.AreEqual(12333, outLen2);
-            for (int j = 0; j < outLen2; j++)
+            for (var j = 0; j < outLen2; j++)
             {
                 Assert.AreEqual(plain[j], plain2[j]);
             }
         }
 
-        private static bool encryptionFailed = false;
-        private static object locker = new object();
+        private static bool encryptionFailed;
+        private static readonly object locker = new();
 
         [TestMethod]
         public void TestPolarSSLEncryption()
         {
             // run it once before the multi-threading test to initialize global tables
             RunSinglePolarSSLEncryptionThread();
-            List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < 10; i++)
+            var threads = new List<Thread>();
+            for (var i = 0; i < 10; i++)
             {
-                Thread t = new Thread(new ThreadStart(RunSinglePolarSSLEncryptionThread));
+                var t = new Thread(RunSinglePolarSSLEncryptionThread);
                 threads.Add(t);
                 t.Start();
             }
-            foreach (Thread t in threads)
+            foreach (var t in threads)
             {
                 t.Join();
             }
@@ -80,12 +78,10 @@ namespace test
         {
             try
             {
-                for (int i = 0; i < 100; i++)
+                for (var i = 0; i < 100; i++)
                 {
-                    IEncryptor encryptor;
-                    IEncryptor decryptor;
-                    encryptor = new MbedTLSEncryptor("aes-256-cfb", "barfoo!", false);
-                    decryptor = new MbedTLSEncryptor("aes-256-cfb", "barfoo!", false);
+                    IEncryptor encryptor = new MbedTLSEncryptor("aes-256-cfb", "barfoo!", false);
+                    IEncryptor decryptor = new MbedTLSEncryptor("aes-256-cfb", "barfoo!", false);
                     RunEncryptionRound(encryptor, decryptor);
                 }
             }
@@ -101,14 +97,14 @@ namespace test
         {
             // run it once before the multi-threading test to initialize global tables
             RunSingleRC4EncryptionThread();
-            List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < 10; i++)
+            var threads = new List<Thread>();
+            for (var i = 0; i < 10; i++)
             {
-                Thread t = new Thread(new ThreadStart(RunSingleRC4EncryptionThread));
+                var t = new Thread(RunSingleRC4EncryptionThread);
                 threads.Add(t);
                 t.Start();
             }
-            foreach (Thread t in threads)
+            foreach (var t in threads)
             {
                 t.Join();
             }
@@ -119,13 +115,11 @@ namespace test
         {
             try
             {
-                for (int i = 0; i < 100; i++)
+                for (var i = 0; i < 100; i++)
                 {
                     var random = new Random();
-                    IEncryptor encryptor;
-                    IEncryptor decryptor;
-                    encryptor = new MbedTLSEncryptor("rc4-md5", "barfoo!", false);
-                    decryptor = new MbedTLSEncryptor("rc4-md5", "barfoo!", false);
+                    IEncryptor encryptor = new MbedTLSEncryptor("rc4-md5", "barfoo!", false);
+                    IEncryptor decryptor = new MbedTLSEncryptor("rc4-md5", "barfoo!", false);
                     RunEncryptionRound(encryptor, decryptor);
                 }
             }
@@ -141,14 +135,14 @@ namespace test
         {
             // run it once before the multi-threading test to initialize global tables
             RunSingleSodiumEncryptionThread();
-            List<Thread> threads = new List<Thread>();
-            for (int i = 0; i < 10; i++)
+            var threads = new List<Thread>();
+            for (var i = 0; i < 10; i++)
             {
-                Thread t = new Thread(new ThreadStart(RunSingleSodiumEncryptionThread));
+                var t = new Thread(RunSingleSodiumEncryptionThread);
                 threads.Add(t);
                 t.Start();
             }
-            foreach (Thread t in threads)
+            foreach (var t in threads)
             {
                 t.Join();
             }
@@ -159,13 +153,11 @@ namespace test
         {
             try
             {
-                for (int i = 0; i < 100; i++)
+                for (var i = 0; i < 100; i++)
                 {
                     var random = new Random();
-                    IEncryptor encryptor;
-                    IEncryptor decryptor;
-                    encryptor = new SodiumEncryptor("salsa20", "barfoo!", false);
-                    decryptor = new SodiumEncryptor("salsa20", "barfoo!", false);
+                    IEncryptor encryptor = new SodiumEncryptor("salsa20", "barfoo!", false);
+                    IEncryptor decryptor = new SodiumEncryptor("salsa20", "barfoo!", false);
                     RunEncryptionRound(encryptor, decryptor);
                 }
             }

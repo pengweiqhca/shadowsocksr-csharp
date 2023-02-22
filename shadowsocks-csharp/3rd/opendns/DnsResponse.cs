@@ -23,64 +23,64 @@ namespace OpenDNS
     /// </summary>
     public class DnsResponse
     {
-        private int _QueryID;
+        private readonly int _QueryID;
 
         //Property Internals
-        private bool _AuthorativeAnswer;
-        private bool _IsTruncated;
-        private bool _RecursionDesired;
-        private bool _RecursionAvailable;
-        private ResponseCodes _ResponseCode;
+        private readonly bool _AuthorativeAnswer;
+        private readonly bool _IsTruncated;
+        private readonly bool _RecursionDesired;
+        private readonly bool _RecursionAvailable;
+        private readonly ResponseCodes _ResponseCode;
 
-        private ResourceRecordCollection _ResourceRecords;
-        private ResourceRecordCollection _Answers;
-        private ResourceRecordCollection _Authorities;
-        private ResourceRecordCollection _AdditionalRecords;
+        private readonly ResourceRecordCollection _ResourceRecords;
+        private readonly ResourceRecordCollection _Answers;
+        private readonly ResourceRecordCollection _Authorities;
+        private readonly ResourceRecordCollection _AdditionalRecords;
 
         //Read Only Public Properties
         public int QueryID
         {
-            get { return _QueryID; }
+            get => _QueryID;
         }
 
         public bool AuthorativeAnswer
         {
-            get { return _AuthorativeAnswer; }
+            get => _AuthorativeAnswer;
         }
 
         public bool IsTruncated
         {
-            get { return _IsTruncated; }
+            get => _IsTruncated;
         }
 
         public bool RecursionRequested
         {
-            get { return _RecursionDesired; }
+            get => _RecursionDesired;
         }
 
         public bool RecursionAvailable
         {
-            get { return _RecursionAvailable; }
+            get => _RecursionAvailable;
         }
 
         public ResponseCodes ResponseCode
         {
-            get { return _ResponseCode; }
+            get => _ResponseCode;
         }
 
         public ResourceRecordCollection Answers
         {
-            get { return _Answers; }
+            get => _Answers;
         }
 
         public ResourceRecordCollection Authorities
         {
-            get { return _Authorities; }
+            get => _Authorities;
         }
 
         public ResourceRecordCollection AdditionalRecords
         {
-            get { return _AdditionalRecords; }
+            get => _AdditionalRecords;
         }
 
         /// <summary>
@@ -95,13 +95,13 @@ namespace OpenDNS
                 if (_ResourceRecords.Count == 0 && _Answers.Count > 0 && _Authorities.Count > 0 && _AdditionalRecords.Count > 0)
                 {
                     foreach (ResourceRecord rr in Answers)
-                        this._ResourceRecords.Add(rr);
+                        _ResourceRecords.Add(rr);
 
                     foreach (ResourceRecord rr in Authorities)
-                        this._ResourceRecords.Add(rr);
+                        _ResourceRecords.Add(rr);
 
                     foreach (ResourceRecord rr in AdditionalRecords)
-                        this._ResourceRecords.Add(rr);
+                        _ResourceRecords.Add(rr);
                 }
 
                 return _ResourceRecords;
@@ -110,17 +110,17 @@ namespace OpenDNS
 
         public DnsResponse(int ID, bool AA, bool TC, bool RD, bool RA, int RC)
         {
-            this._QueryID = ID;
-            this._AuthorativeAnswer = AA;
-            this._IsTruncated = TC;
-            this._RecursionDesired = RD;
-            this._RecursionAvailable = RA;
-            this._ResponseCode = (ResponseCodes)RC;
+            _QueryID = ID;
+            _AuthorativeAnswer = AA;
+            _IsTruncated = TC;
+            _RecursionDesired = RD;
+            _RecursionAvailable = RA;
+            _ResponseCode = (ResponseCodes)RC;
 
-            this._ResourceRecords = new ResourceRecordCollection();
-            this._Answers = new ResourceRecordCollection();
-            this._Authorities = new ResourceRecordCollection();
-            this._AdditionalRecords = new ResourceRecordCollection();
+            _ResourceRecords = new ResourceRecordCollection();
+            _Answers = new ResourceRecordCollection();
+            _Authorities = new ResourceRecordCollection();
+            _AdditionalRecords = new ResourceRecordCollection();
         }
     }
 }

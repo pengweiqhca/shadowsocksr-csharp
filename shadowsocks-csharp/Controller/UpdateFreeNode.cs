@@ -1,13 +1,5 @@
 ﻿using Shadowsocks.Model;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Xml;
-using System.Windows.Forms;
 
 namespace Shadowsocks.Controller
 {
@@ -31,7 +23,7 @@ namespace Shadowsocks.Controller
                 HttpClient http;
                 if (use_proxy)
                 {
-                    WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+                    var proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
                     if (!string.IsNullOrEmpty(config.authPass))
                     {
                         proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
@@ -46,17 +38,17 @@ namespace Shadowsocks.Controller
                 else http = new HttpClient();
 
                 http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
-                    String.IsNullOrEmpty(config.proxyUserAgent) ?
+                    string.IsNullOrEmpty(config.proxyUserAgent) ?
                     "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
                     : config.proxyUserAgent);
 
 
                 this.subscribeTask = subscribeTask;
-                string URL = subscribeTask.URL ?? UpdateURL;
+                var URL = subscribeTask.URL ?? UpdateURL;
                 if (!URL.Contains('?')) URL += '?';
                 if (!URL.EndsWith("?") && !URL.EndsWith("&")) URL += '&';
 
-                URL += "rnd=" + Util.Utils.RandUInt32();
+                URL += $"rnd={Util.Utils.RandUInt32()}";
 
                 using (http)
                     await http_DownloadStringCompleted(http.GetStringAsync(URL));
@@ -73,19 +65,12 @@ namespace Shadowsocks.Controller
             {
                 FreeNodeResult = await task;
 
-                if (NewFreeNodeFound != null)
-                {
-                    NewFreeNodeFound(this, new EventArgs());
-                }
+                NewFreeNodeFound?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {
                 Logging.Debug(ex.ToString());
-                if (NewFreeNodeFound != null)
-                {
-                    NewFreeNodeFound(this, new EventArgs());
-                }
-                return;
+                NewFreeNodeFound?.Invoke(this, EventArgs.Empty);
             }
         }
     }
@@ -110,15 +95,17 @@ namespace Shadowsocks.Controller
                 if (index < 0)
                 {
                     _serverSubscribes = new List<ServerSubscribe>();
-                    for (int i = 0; i < config.serverSubscribes.Count; ++i)
+                    for (var i = 0; i < config.serverSubscribes.Count; ++i)
                     {
                         _serverSubscribes.Add(config.serverSubscribes[i]);
                     }
                 }
                 else if (index < _config.serverSubscribes.Count)
                 {
-                    _serverSubscribes = new List<ServerSubscribe>();
-                    _serverSubscribes.Add(config.serverSubscribes[index]);
+                    _serverSubscribes = new List<ServerSubscribe>
+                    {
+                        config.serverSubscribes[index]
+                    };
                 }
                 Next();
             }
@@ -131,21 +118,15 @@ namespace Shadowsocks.Controller
                 _config = null;
                 return false;
             }
-            else
-            {
-                _URL = _serverSubscribes[0].URL;
-                _updater.CheckUpdate(_config, _serverSubscribes[0], _use_proxy, _noitify);
-                _serverSubscribes.RemoveAt(0);
-                return true;
-            }
+            _URL = _serverSubscribes[0].URL;
+            _updater.CheckUpdate(_config, _serverSubscribes[0], _use_proxy, _noitify);
+            _serverSubscribes.RemoveAt(0);
+            return true;
         }
 
         public string URL
         {
-            get
-            {
-                return _URL;
-            }
+            get => _URL;
         }
     }
 }

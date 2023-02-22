@@ -1,10 +1,7 @@
 ﻿using Shadowsocks.Model;
-using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
 using System.Timers;
 
 namespace Shadowsocks.Controller
@@ -23,29 +20,26 @@ namespace Shadowsocks.Controller
         Socket _socket;
         Socket _socket_v6;
         bool _stop;
-        IList<Service> _services;
+        readonly IList<Service> _services;
         protected System.Timers.Timer timer;
-        protected object timerLock = new object();
+        protected object timerLock = new();
 
         public Listener(IList<Service> services)
         {
-            this._services = services;
+            _services = services;
             _stop = false;
         }
 
-        public IList<Service> GetServices()
-        {
-            return _services;
-        }
+        public IList<Service> GetServices() => _services;
 
         private bool CheckIfPortInUse(int port)
         {
             try
             {
-                IPGlobalProperties ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-                IPEndPoint[] ipEndPoints = ipProperties.GetActiveTcpListeners();
+                var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+                var ipEndPoints = ipProperties.GetActiveTcpListeners();
 
-                foreach (IPEndPoint endPoint in ipEndPoints)
+                foreach (var endPoint in ipEndPoints)
                 {
                     if (endPoint.Port == port)
                     {
@@ -64,7 +58,7 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                if (this._shareOverLAN != config.shareOverLan
+                if (_shareOverLAN != config.shareOverLan
                     || _authUser != config.authUser
                     || _authPass != config.authPass
                     || _socket == null
@@ -80,20 +74,20 @@ namespace Shadowsocks.Controller
 
         public void Start(Configuration config, int port)
         {
-            this._config = config;
-            this._shareOverLAN = config.shareOverLan;
-            this._authUser = config.authUser;
-            this._authPass = config.authPass;
+            _config = config;
+            _shareOverLAN = config.shareOverLan;
+            _authUser = config.authUser;
+            _authPass = config.authPass;
             _stop = false;
 
-            int localPort = port == 0 ? _config.localPort : port;
+            var localPort = port == 0 ? _config.localPort : port;
             if (CheckIfPortInUse(localPort))
                 throw new Exception(I18N.GetString("Port already in use"));
 
             try
             {
                 // Create a TCP/IP socket.
-                bool ipv6 = true;
+                var ipv6 = true;
                 //bool ipv6 = false;
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
@@ -142,14 +136,13 @@ namespace Shadowsocks.Controller
                 //}
 
                 // Start an asynchronous socket to listen for connections.
-                Console.WriteLine("ShadowsocksR started on port " + localPort.ToString());
+                Console.WriteLine($"ShadowsocksR started on port {localPort}");
                 _socket.BeginAccept(
-                    new AsyncCallback(AcceptCallback),
+                    AcceptCallback,
                     _socket);
-                if (_socket_v6 != null)
-                    _socket_v6.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
-                        _socket_v6);
+                _socket_v6?.BeginAccept(
+                    AcceptCallback,
+                    _socket_v6);
             }
             catch (SocketException e)
             {
@@ -184,7 +177,7 @@ namespace Shadowsocks.Controller
             }
         }
 
-        private void ResetTimeout(Double time, Socket socket)
+        private void ResetTimeout(double time, Socket socket)
         {
             if (time <= 0 && timer == null)
                 return;
@@ -225,11 +218,11 @@ namespace Shadowsocks.Controller
             {
                 return;
             }
-            Socket listener = socket;
+            var listener = socket;
             try
             {
                 listener.BeginAccept(
-                    new AsyncCallback(AcceptCallback),
+                    AcceptCallback,
                     listener);
                 ResetTimeout(0, listener);
             }
@@ -249,10 +242,10 @@ namespace Shadowsocks.Controller
         {
             if (_stop) return;
 
-            Socket listener = (Socket)ar.AsyncState;
+            var listener = (Socket)ar.AsyncState;
             try
             {
-                Socket conn = listener.EndAccept(ar);
+                var conn = listener.EndAccept(ar);
 
                 if (!_shareOverLAN && !Util.Utils.isLocal(conn))
                 {
@@ -260,7 +253,7 @@ namespace Shadowsocks.Controller
                     conn.Close();
                 }
 
-                int local_port = ((IPEndPoint)conn.LocalEndPoint).Port;
+                var local_port = ((IPEndPoint)conn.LocalEndPoint).Port;
 
                 if ((_authUser ?? "").Length == 0 && !Util.Utils.isLAN(conn)
                     && !(_config.GetPortMapCache().ContainsKey(local_port)
@@ -271,8 +264,8 @@ namespace Shadowsocks.Controller
                 }
                 else
                 {
-                    byte[] buf = new byte[4096];
-                    object[] state = new object[] {
+                    var buf = new byte[4096];
+                    var state = new object[] {
                         conn,
                         buf
                     };
@@ -280,11 +273,11 @@ namespace Shadowsocks.Controller
                     if (!_config.GetPortMapCache().ContainsKey(local_port) || _config.GetPortMapCache()[local_port].type != PortMapType.Forward)
                     {
                         conn.BeginReceive(buf, 0, buf.Length, 0,
-                            new AsyncCallback(ReceiveCallback), state);
+                            ReceiveCallback, state);
                     }
                     else
                     {
-                        foreach (Service service in _services)
+                        foreach (var service in _services)
                         {
                             if (service.Handle(buf, 0, conn))
                             {
@@ -310,7 +303,7 @@ namespace Shadowsocks.Controller
                 try
                 {
                     listener.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
+                        AcceptCallback,
                         listener);
                 }
                 catch (ObjectDisposedException)
@@ -328,14 +321,14 @@ namespace Shadowsocks.Controller
 
         private void ReceiveCallback(IAsyncResult ar)
         {
-            object[] state = (object[])ar.AsyncState;
+            var state = (object[])ar.AsyncState;
 
-            Socket conn = (Socket)state[0];
-            byte[] buf = (byte[])state[1];
+            var conn = (Socket)state[0];
+            var buf = (byte[])state[1];
             try
             {
-                int bytesRead = conn.EndReceive(ar);
-                foreach (Service service in _services)
+                var bytesRead = conn.EndReceive(ar);
+                foreach (var service in _services)
                 {
                     if (service.Handle(buf, bytesRead, conn))
                     {

@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net;
-using System.IO;
-using Shadowsocks.Properties;
-using SimpleJson;
+﻿using Shadowsocks.Model;
 using Shadowsocks.Util;
-using Shadowsocks.Model;
+using System.Net;
+using System.Text;
 
 namespace Shadowsocks.Controller
 {
@@ -18,13 +13,13 @@ namespace Shadowsocks.Controller
 
         private const string GFWLIST_TEMPLATE_URL = "https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/ssr/ss_gfw.pac";
 
-        private static string PAC_FILE = PACServer.PAC_FILE;
+        private static readonly string PAC_FILE = PACServer.PAC_FILE;
 
-        private static string USER_RULE_FILE = PACServer.USER_RULE_FILE;
+        private static readonly string USER_RULE_FILE = PACServer.USER_RULE_FILE;
 
-        private static string USER_ABP_FILE = PACServer.USER_ABP_FILE;
+        private static readonly string USER_ABP_FILE = PACServer.USER_ABP_FILE;
 
-        private static string gfwlist_template = null;
+        private static string gfwlist_template;
 
         private Configuration lastConfig;
 
@@ -38,10 +33,7 @@ namespace Shadowsocks.Controller
         {
             public bool Success;
 
-            public ResultEventArgs(bool success)
-            {
-                this.Success = success;
-            }
+            public ResultEventArgs(bool success) => Success = success;
         }
 
         private async Task http_DownloadGFWTemplateCompleted(Task<string> task)
@@ -66,10 +58,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception ex)
             {
-                if (Error != null)
-                {
-                    Error(this, new ErrorEventArgs(ex));
-                }
+                Error?.Invoke(this, new ErrorEventArgs(ex));
             }
         }
 
@@ -79,29 +68,37 @@ namespace Shadowsocks.Controller
             {
                 var result = await task;
 
-                List<string> lines = ParseResult(result);
+                var lines = ParseResult(result);
                 if (lines.Count == 0)
                 {
                     throw new Exception("Empty GFWList");
                 }
                 if (File.Exists(USER_RULE_FILE))
                 {
-                    string local = File.ReadAllText(USER_RULE_FILE, Encoding.UTF8);
-                    string[] rules = local.Split(new char[]
+#if NETFRAMEWORK
+                    var local = File.ReadAllText(USER_RULE_FILE, Encoding.UTF8);
+#else
+                    var local = await File.ReadAllTextAsync(USER_RULE_FILE, Encoding.UTF8);
+#endif
+                    var rules = local.Split(new[]
                     {
                         '\r', '\n'
                     }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string rule in rules)
+                    foreach (var rule in rules)
                     {
                         if (rule.StartsWith("!") || rule.StartsWith("["))
                             continue;
                         lines.Add(rule);
                     }
                 }
-                string abpContent = gfwlist_template;
+                var abpContent = gfwlist_template;
                 if (File.Exists(USER_ABP_FILE))
                 {
+#if NETFRAMEWORK
                     abpContent = File.ReadAllText(USER_ABP_FILE, Encoding.UTF8);
+#else
+                    abpContent = await File.ReadAllTextAsync(USER_ABP_FILE, Encoding.UTF8);
+#endif
                 }
                 else
                 {
@@ -110,7 +107,11 @@ namespace Shadowsocks.Controller
                 abpContent = abpContent.Replace("__RULES__", SimpleJson.SimpleJson.SerializeObject(lines));
                 if (File.Exists(PAC_FILE))
                 {
-                    string original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
+#if NETFRAMEWORK
+                    var original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
+#else
+                    var original = await File.ReadAllTextAsync(PAC_FILE, Encoding.UTF8);
+#endif
                     if (original == abpContent)
                     {
                         update_type = 0;
@@ -118,7 +119,11 @@ namespace Shadowsocks.Controller
                         return;
                     }
                 }
+#if NETFRAMEWORK
                 File.WriteAllText(PAC_FILE, abpContent, Encoding.UTF8);
+#else
+                await File.WriteAllTextAsync(PAC_FILE, abpContent, Encoding.UTF8);
+#endif
                 if (UpdateCompleted != null)
                 {
                     update_type = 0;
@@ -131,7 +136,7 @@ namespace Shadowsocks.Controller
                 {
                     if (!isBackupRequest)
                     {
-                        await http_DownloadStringCompleted(http, http.GetStringAsync(GFWLIST_BACKUP_URL + "?rnd=" + Utils.RandUInt32()), true);
+                        await http_DownloadStringCompleted(http, http.GetStringAsync($"{GFWLIST_BACKUP_URL}?rnd={Utils.RandUInt32()}"), true);
                     }
                     else
                     {
@@ -149,7 +154,11 @@ namespace Shadowsocks.Controller
 
                 if (File.Exists(PAC_FILE))
                 {
-                    string original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
+#if NETFRAMEWORK
+                    var original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
+#else
+                    var original = await File.ReadAllTextAsync(PAC_FILE, Encoding.UTF8);
+#endif
                     if (original == content)
                     {
                         update_type = 1;
@@ -157,7 +166,11 @@ namespace Shadowsocks.Controller
                         return;
                     }
                 }
+#if NETFRAMEWORK
                 File.WriteAllText(PAC_FILE, content, Encoding.UTF8);
+#else
+                await File.WriteAllTextAsync(PAC_FILE, content, Encoding.UTF8);
+#endif
                 if (UpdateCompleted != null)
                 {
                     update_type = 1;
@@ -166,10 +179,7 @@ namespace Shadowsocks.Controller
             }
             catch (Exception ex)
             {
-                if (Error != null)
-                {
-                    Error(this, new ErrorEventArgs(ex));
-                }
+                Error?.Invoke(this, new ErrorEventArgs(ex));
             }
 
         }
@@ -180,7 +190,7 @@ namespace Shadowsocks.Controller
             {
                 lastConfig = config;
 
-                WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+                var proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
                 if (!string.IsNullOrEmpty(config.authPass))
                 {
                     proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
@@ -191,15 +201,15 @@ namespace Shadowsocks.Controller
                     UseProxy = true,
                 });
                 http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
-                    String.IsNullOrEmpty(config.proxyUserAgent) ?
+                    string.IsNullOrEmpty(config.proxyUserAgent) ?
                     "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
                     : config.proxyUserAgent);
 
-                await http_DownloadGFWTemplateCompleted(http.GetStringAsync(GFWLIST_TEMPLATE_URL + "?rnd=" + Util.Utils.RandUInt32()));
+                await http_DownloadGFWTemplateCompleted(http.GetStringAsync($"{GFWLIST_TEMPLATE_URL}?rnd={Utils.RandUInt32()}"));
             }
             else
             {
-                WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+                var proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
                 if (!string.IsNullOrEmpty(config.authPass))
                 {
                     proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
@@ -210,17 +220,17 @@ namespace Shadowsocks.Controller
                     UseProxy = true,
                 });
                 http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
-                    String.IsNullOrEmpty(config.proxyUserAgent) ?
+                    string.IsNullOrEmpty(config.proxyUserAgent) ?
                     "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
                     : config.proxyUserAgent);
 
-                await http_DownloadStringCompleted(http, http.GetStringAsync(GFWLIST_URL + "?rnd=" + Utils.RandUInt32()), false);
+                await http_DownloadStringCompleted(http, http.GetStringAsync($"{GFWLIST_URL}?rnd={Utils.RandUInt32()}"), false);
             }
         }
 
         public async void UpdatePACFromGFWList(Configuration config, string url)
         {
-            WebProxy proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
+            var proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
             if (!string.IsNullOrEmpty(config.authPass))
             {
                 proxy.Credentials = new NetworkCredential(config.authUser, config.authPass);
@@ -231,20 +241,20 @@ namespace Shadowsocks.Controller
                 UseProxy = true,
             });
             http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
-            String.IsNullOrEmpty(config.proxyUserAgent) ?
+            string.IsNullOrEmpty(config.proxyUserAgent) ?
                 "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.3319.102 Safari/537.36"
                 : config.proxyUserAgent);
 
-            await http_DownloadPACCompleted(http.GetStringAsync(url + "?rnd=" + Util.Utils.RandUInt32()));
+            await http_DownloadPACCompleted(http.GetStringAsync($"{url}?rnd={Utils.RandUInt32()}"));
         }
 
         public List<string> ParseResult(string response)
         {
-            byte[] bytes = Convert.FromBase64String(response);
-            string content = Encoding.ASCII.GetString(bytes);
-            string[] lines = content.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            List<string> valid_lines = new List<string>(lines.Length);
-            foreach (string line in lines)
+            var bytes = Convert.FromBase64String(response);
+            var content = Encoding.ASCII.GetString(bytes);
+            var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var valid_lines = new List<string>(lines.Length);
+            foreach (var line in lines)
             {
                 if (line.StartsWith("!") || line.StartsWith("["))
                     continue;

@@ -32,26 +32,26 @@ namespace OpenDNS
 
 		public ResourceRecord(string _Name, Types _Type, Classes _Class, int _TimeToLive)
 		{
-			this.Name = _Name; 
-			this.Type = _Type; 
-			this.Class = _Class; 
-			this.TimeToLive = _TimeToLive; 
+			Name = _Name; 
+			Type = _Type; 
+			Class = _Class; 
+			TimeToLive = _TimeToLive; 
 		}
 
 		public ResourceRecord(string _Name, Types _Type, Classes _Class, int _TimeToLive, string _RText)
 		{
-			this.Name = _Name; 
-			this.Type = _Type; 
-			this.Class = _Class; 
-			this.TimeToLive = _TimeToLive; 
-			this.RText = _RText; 
+			Name = _Name; 
+			Type = _Type; 
+			Class = _Class; 
+			TimeToLive = _TimeToLive; 
+			RText = _RText; 
 		}
 
 		public override string ToString()
 		{
 			
-			StringBuilder sb = new StringBuilder(); 
-			sb.Append("Name=" + Name + "&Type=" + Type + "&Class=" + Class + "&TTL="+TimeToLive); 
+			var sb = new StringBuilder(); 
+			sb.Append($"Name={Name}&Type={Type}&Class={Class}&TTL={TimeToLive}"); 
 			//TODO: Return TTL as minutes? 
 			//TimeSpan timeSpan = new TimeSpan(0, 0, 0, TimeToLive, 0);
 

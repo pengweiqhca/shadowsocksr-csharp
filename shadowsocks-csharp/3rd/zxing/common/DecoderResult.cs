@@ -29,15 +29,15 @@ namespace ZXing.Common
    {
       public byte[] RawBytes { get; private set; }
 
-      public String Text { get; private set; }
+      public string Text { get; private set; }
 
       public IList<byte[]> ByteSegments { get; private set; }
 
-      public String ECLevel { get; private set; }
+      public string ECLevel { get; private set; }
 
       public bool StructuredAppend
       {
-         get { return StructuredAppendParity >= 0 && StructuredAppendSequenceNumber >= 0; }
+         get => StructuredAppendParity >= 0 && StructuredAppendSequenceNumber >= 0;
       }
 
       public int ErrorsCorrected { get; set; }
@@ -54,12 +54,12 @@ namespace ZXing.Common
       /// <value>The other.</value>
       public object Other { get; set; }
 
-      public DecoderResult(byte[] rawBytes, String text, IList<byte[]> byteSegments, String ecLevel)
+      public DecoderResult(byte[] rawBytes, string text, IList<byte[]> byteSegments, string ecLevel)
          : this(rawBytes, text, byteSegments, ecLevel, -1, -1)
       {
       }
 
-      public DecoderResult(byte[] rawBytes, String text, IList<byte[]> byteSegments, String ecLevel, int saSequence, int saParity)
+      public DecoderResult(byte[] rawBytes, string text, IList<byte[]> byteSegments, string ecLevel, int saSequence, int saParity)
       {
          if (rawBytes == null && text == null)
          {

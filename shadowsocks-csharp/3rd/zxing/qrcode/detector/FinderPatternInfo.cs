@@ -33,9 +33,9 @@ namespace ZXing.QrCode.Internal
       /// <param name="patternCenters">The pattern centers.</param>
       public FinderPatternInfo(FinderPattern[] patternCenters)
       {
-         this.bottomLeft = patternCenters[0];
-         this.topLeft = patternCenters[1];
-         this.topRight = patternCenters[2];
+         bottomLeft = patternCenters[0];
+         topLeft = patternCenters[1];
+         topRight = patternCenters[2];
       }
 
       /// <summary>
@@ -43,10 +43,7 @@ namespace ZXing.QrCode.Internal
       /// </summary>
       public FinderPattern BottomLeft
       {
-         get
-         {
-            return bottomLeft;
-         }
+         get => bottomLeft;
       }
 
       /// <summary>
@@ -54,10 +51,7 @@ namespace ZXing.QrCode.Internal
       /// </summary>
       public FinderPattern TopLeft
       {
-         get
-         {
-            return topLeft;
-         }
+         get => topLeft;
       }
 
       /// <summary>
@@ -65,10 +59,7 @@ namespace ZXing.QrCode.Internal
       /// </summary>
       public FinderPattern TopRight
       {
-         get
-         {
-            return topRight;
-         }
+         get => topRight;
       }
    }
 }

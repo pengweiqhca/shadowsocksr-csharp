@@ -20,7 +20,8 @@ namespace Shadowsocks.Encryption
         {
         }
 
-        private static Dictionary<string, EncryptorInfo> _ciphers = new Dictionary<string, EncryptorInfo> {
+        private static readonly Dictionary<string, EncryptorInfo> _ciphers = new()
+        {
             { "aes-128-cbc", new EncryptorInfo(16, 16, false, CIPHER_AES, "AES-128-CBC") },
             { "aes-192-cbc", new EncryptorInfo(24, 16, false, CIPHER_AES, "AES-192-CBC") },
             { "aes-256-cbc", new EncryptorInfo(32, 16, false, CIPHER_AES, "AES-256-CBC") },
@@ -39,20 +40,14 @@ namespace Shadowsocks.Encryption
             { "rc4-md5-6", new EncryptorInfo(16, 6, true, CIPHER_RC4, "ARC4-128") },
         };
 
-        public static List<string> SupportedCiphers()
-        {
-            return new List<string>(_ciphers.Keys);
-        }
+        public static List<string> SupportedCiphers() => new(_ciphers.Keys);
 
-        protected override Dictionary<string, EncryptorInfo> getCiphers()
-        {
-            return _ciphers;
-        }
+        protected override Dictionary<string, EncryptorInfo> getCiphers() => _ciphers;
 
         protected override void initCipher(byte[] iv, bool isCipher)
         {
             base.initCipher(iv, isCipher);
-            IntPtr ctx = Marshal.AllocHGlobal(MbedTLS.cipher_get_size_ex());
+            var ctx = Marshal.AllocHGlobal(MbedTLS.cipher_get_size_ex());
             if (isCipher)
             {
                 _encryptCtx = ctx;
@@ -64,7 +59,7 @@ namespace Shadowsocks.Encryption
             byte[] realkey;
             if (_method.StartsWith("rc4-"))
             {
-                byte[] temp = new byte[keyLen + ivLen];
+                var temp = new byte[keyLen + ivLen];
                 realkey = new byte[keyLen];
                 Array.Copy(_key, 0, temp, 0, keyLen);
                 Array.Copy(iv, 0, temp, keyLen, ivLen);
@@ -102,7 +97,7 @@ namespace Shadowsocks.Encryption
             // C# could be multi-threaded
             if (_disposed)
             {
-                throw new ObjectDisposedException(this.ToString());
+                throw new ObjectDisposedException(ToString());
             }
             if (MbedTLS.cipher_update(isCipher ? _encryptCtx : _decryptCtx,
                 buf, length, outbuf, ref length) != 0 )

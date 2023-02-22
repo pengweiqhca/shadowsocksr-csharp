@@ -37,7 +37,7 @@ namespace ZXing
       /// Initializes a new instance of the <see cref="WriterException"/> class.
       /// </summary>
       /// <param name="message">The message.</param>
-      public WriterException(String message)
+      public WriterException(string message)
          :base(message)
 		{
 		}
@@ -47,7 +47,7 @@ namespace ZXing
       /// </summary>
       /// <param name="message">The message.</param>
       /// <param name="innerExc">The inner exc.</param>
-      public WriterException(String message, Exception innerExc)
+      public WriterException(string message, Exception innerExc)
          : base(message, innerExc)
       {
       }

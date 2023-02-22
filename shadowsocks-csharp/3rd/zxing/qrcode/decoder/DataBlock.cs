@@ -55,41 +55,41 @@ namespace ZXing.QrCode.Internal
 
          if (rawCodewords.Length != version.TotalCodewords)
          {
-            throw new System.ArgumentException();
+            throw new ArgumentException();
          }
 
          // Figure out the number and size of data blocks used by this version and
          // error correction level
-         Version.ECBlocks ecBlocks = version.getECBlocksForLevel(ecLevel);
+         var ecBlocks = version.getECBlocksForLevel(ecLevel);
 
          // First count the total number of data blocks
-         int totalBlocks = 0;
-         Version.ECB[] ecBlockArray = ecBlocks.getECBlocks();
+         var totalBlocks = 0;
+         var ecBlockArray = ecBlocks.getECBlocks();
          foreach (var ecBlock in ecBlockArray)
          {
             totalBlocks += ecBlock.Count;
          }
 
          // Now establish DataBlocks of the appropriate size and number of data codewords
-         DataBlock[] result = new DataBlock[totalBlocks];
-         int numResultBlocks = 0;
+         var result = new DataBlock[totalBlocks];
+         var numResultBlocks = 0;
          foreach (var ecBlock in ecBlockArray)
          {
-            for (int i = 0; i < ecBlock.Count; i++)
+            for (var i = 0; i < ecBlock.Count; i++)
             {
-               int numDataCodewords = ecBlock.DataCodewords;
-               int numBlockCodewords = ecBlocks.ECCodewordsPerBlock + numDataCodewords;
+               var numDataCodewords = ecBlock.DataCodewords;
+               var numBlockCodewords = ecBlocks.ECCodewordsPerBlock + numDataCodewords;
                result[numResultBlocks++] = new DataBlock(numDataCodewords, new byte[numBlockCodewords]);
             }
          }
 
          // All blocks have the same amount of data, except that the last n
          // (where n may be 0) have 1 more byte. Figure out where these start.
-         int shorterBlocksTotalCodewords = result[0].codewords.Length;
-         int longerBlocksStartAt = result.Length - 1;
+         var shorterBlocksTotalCodewords = result[0].codewords.Length;
+         var longerBlocksStartAt = result.Length - 1;
          while (longerBlocksStartAt >= 0)
          {
-            int numCodewords = result[longerBlocksStartAt].codewords.Length;
+            var numCodewords = result[longerBlocksStartAt].codewords.Length;
             if (numCodewords == shorterBlocksTotalCodewords)
             {
                break;
@@ -98,29 +98,29 @@ namespace ZXing.QrCode.Internal
          }
          longerBlocksStartAt++;
 
-         int shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks.ECCodewordsPerBlock;
+         var shorterBlocksNumDataCodewords = shorterBlocksTotalCodewords - ecBlocks.ECCodewordsPerBlock;
          // The last elements of result may be 1 element longer;
          // first fill out as many elements as all of them have
-         int rawCodewordsOffset = 0;
-         for (int i = 0; i < shorterBlocksNumDataCodewords; i++)
+         var rawCodewordsOffset = 0;
+         for (var i = 0; i < shorterBlocksNumDataCodewords; i++)
          {
-            for (int j = 0; j < numResultBlocks; j++)
+            for (var j = 0; j < numResultBlocks; j++)
             {
                result[j].codewords[i] = rawCodewords[rawCodewordsOffset++];
             }
          }
          // Fill out the last data block in the longer ones
-         for (int j = longerBlocksStartAt; j < numResultBlocks; j++)
+         for (var j = longerBlocksStartAt; j < numResultBlocks; j++)
          {
             result[j].codewords[shorterBlocksNumDataCodewords] = rawCodewords[rawCodewordsOffset++];
          }
          // Now add in error correction blocks
-         int max = result[0].codewords.Length;
-         for (int i = shorterBlocksNumDataCodewords; i < max; i++)
+         var max = result[0].codewords.Length;
+         for (var i = shorterBlocksNumDataCodewords; i < max; i++)
          {
-            for (int j = 0; j < numResultBlocks; j++)
+            for (var j = 0; j < numResultBlocks; j++)
             {
-               int iOffset = j < longerBlocksStartAt ? i : i + 1;
+               var iOffset = j < longerBlocksStartAt ? i : i + 1;
                result[j].codewords[iOffset] = rawCodewords[rawCodewordsOffset++];
             }
          }
@@ -129,18 +129,12 @@ namespace ZXing.QrCode.Internal
 
       internal int NumDataCodewords
       {
-         get
-         {
-            return numDataCodewords;
-         }
+         get => numDataCodewords;
       }
 
       internal byte[] Codewords
       {
-         get
-         {
-            return codewords;
-         }
+         get => codewords;
       }
    }
 }

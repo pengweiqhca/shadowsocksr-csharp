@@ -13,23 +13,23 @@ namespace Shadowsocks.View
 {
     public partial class SettingsForm : Form
     {
-        private ShadowsocksController controller;
+        private readonly ShadowsocksController controller;
         // this is a copy of configuration that we are working on
         private Configuration _modifiedConfiguration;
-        private Dictionary<int, string> _balanceIndexMap = new Dictionary<int, string>();
+        private readonly Dictionary<int, string> _balanceIndexMap = new();
 
         public SettingsForm(ShadowsocksController controller)
         {
-            this.Font = System.Drawing.SystemFonts.MessageBoxFont;
+            Font = SystemFonts.MessageBoxFont;
             InitializeComponent();
 
-            this.Icon = Icon.FromHandle(Resources.ssw128.GetHicon());
+            Icon = Icon.FromHandle(Resources.ssw128.GetHicon());
             this.controller = controller;
 
             UpdateTexts();
             controller.ConfigChanged += controller_ConfigChanged;
 
-            int dpi_mul = Util.Utils.GetDpiMul();
+            var dpi_mul = Util.Utils.GetDpiMul();
 
             //comment
             ////int font_height = 9;
@@ -68,10 +68,7 @@ namespace Shadowsocks.View
 
         private void UpdateTexts()
         {
-            this.Text = I18N.GetString("Global Settings") + "("
-                + (controller.GetCurrentConfiguration().shareOverLan ? I18N.GetString("Any") : I18N.GetString("Local")) + ":" + controller.GetCurrentConfiguration().localPort.ToString()
-                + " " + I18N.GetString("Version") + ":" + UpdateChecker.FullVersion
-                + ")";
+            Text = $"{I18N.GetString("Global Settings")}({(controller.GetCurrentConfiguration().shareOverLan ? I18N.GetString("Any") : I18N.GetString("Local"))}:{controller.GetCurrentConfiguration().localPort} {I18N.GetString("Version")}:{UpdateChecker.FullVersion})";
 
             gbxListen.Text = I18N.GetString(gbxListen.Text);
             checkShareOverLan.Text = I18N.GetString(checkShareOverLan.Text);
@@ -103,12 +100,12 @@ namespace Shadowsocks.View
             lblAuthPass.Text = I18N.GetString("Password");
 
             lblBalance.Text = I18N.GetString("Balance");
-            for (int i = 0; i < cmbProxyType.Items.Count; ++i)
+            for (var i = 0; i < cmbProxyType.Items.Count; ++i)
             {
                 cmbProxyType.Items[i] = I18N.GetString(cmbProxyType.Items[i].ToString());
             }
             chkBalanceInGroup.Text = I18N.GetString("Balance in group");
-            for (int i = 0; i < cmbBalance.Items.Count; ++i)
+            for (var i = 0; i < cmbBalance.Items.Count; ++i)
             {
                 _balanceIndexMap[i] = cmbBalance.Items[i].ToString();
                 cmbBalance.Items[i] = I18N.GetString(cmbBalance.Items[i].ToString());
@@ -125,17 +122,17 @@ namespace Shadowsocks.View
 
         private void ShowWindow()
         {
-            this.Opacity = 1;
-            this.Show();
+            Opacity = 1;
+            Show();
         }
 
         private int SaveOldSelectedServer()
         {
             try
             {
-                int localPort = int.Parse(nudProxyPort.Text);
+                var localPort = int.Parse(nudProxyPort.Text);
                 Configuration.CheckPort(localPort);
-                int ret = 0;
+                var ret = 0;
                 _modifiedConfiguration.shareOverLan = checkShareOverLan.Checked;
                 _modifiedConfiguration.localPort = localPort;
                 _modifiedConfiguration.reconnectTimes = nudReconnect.Text.Length == 0 ? 0 : int.Parse(nudReconnect.Text);
@@ -183,8 +180,8 @@ namespace Shadowsocks.View
 
             chkAutoStartup.Checked = AutoStartup.Check();
             chkBalance.Checked = _modifiedConfiguration.random;
-            int selectedIndex = 0;
-            for (int i = 0; i < _balanceIndexMap.Count; ++i)
+            var selectedIndex = 0;
+            for (var i = 0; i < _balanceIndexMap.Count; ++i)
             {
                 if (_modifiedConfiguration.balanceAlgorithm == _balanceIndexMap[i])
                 {
@@ -228,12 +225,12 @@ namespace Shadowsocks.View
                 return;
             }
             controller.SaveServersConfig(_modifiedConfiguration);
-            this.Close();
+            Close();
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void buttonDefault_Click(object sender, EventArgs e)

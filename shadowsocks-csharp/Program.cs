@@ -1,12 +1,4 @@
 ﻿using Shadowsocks.Controller;
-using Shadowsocks.Properties;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Threading;
-using System.Windows.Forms;
 using Microsoft.Win32;
 using Shadowsocks.Model;
 #if !_CONSOLE
@@ -29,76 +21,73 @@ namespace Shadowsocks
         static void Main(string[] args)
         {
 #if !_CONSOLE
-            foreach (string arg in args)
+            foreach (var arg in args)
             {
                 if (arg == "--setautorun")
                 {
-                    if (!Controller.AutoStartup.Switch())
+                    if (!AutoStartup.Switch())
                     {
                         Environment.ExitCode = 1;
                     }
                     return;
                 }
             }
-            using (Mutex mutex = new Mutex(false, "Global\\ShadowsocksR_" + Application.StartupPath.GetHashCode()))
+            using var mutex = new Mutex(false, $"Global\\ShadowsocksR_{Application.StartupPath.GetHashCode()}");
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            Application.EnableVisualStyles();
+            Application.ApplicationExit += Application_ApplicationExit;
+            SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            if (!mutex.WaitOne(0, false))
             {
-                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-                Application.EnableVisualStyles();
-                Application.ApplicationExit += Application_ApplicationExit;
-                SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
-                Application.SetCompatibleTextRenderingDefault(false);
+                MessageBox.Show($"{I18N.GetString("Find Shadowsocks icon in your notify tray.")}\n{I18N.GetString("If you want to start multiple Shadowsocks, make a copy in another directory.")}",
+                    I18N.GetString("ShadowsocksR is already running."));
+                return;
+            }
+#endif
+            Directory.SetCurrentDirectory(Application.StartupPath);
 
-                if (!mutex.WaitOne(0, false))
-                {
-                    MessageBox.Show(I18N.GetString("Find Shadowsocks icon in your notify tray.") + "\n" +
-                        I18N.GetString("If you want to start multiple Shadowsocks, make a copy in another directory."),
-                        I18N.GetString("ShadowsocksR is already running."));
+#if !_CONSOLE
+            var try_times = 0;
+            while (Configuration.Load() == null)
+            {
+                if (try_times >= 5)
                     return;
-                }
-#endif
-                Directory.SetCurrentDirectory(Application.StartupPath);
-
-#if !_CONSOLE
-                int try_times = 0;
-                while (Configuration.Load() == null)
+                using (var dlg = new InputPassword())
                 {
-                    if (try_times >= 5)
+                    if (dlg.ShowDialog() == DialogResult.OK)
+                        Configuration.SetPassword(dlg.password);
+                    else
                         return;
-                    using (InputPassword dlg = new InputPassword())
-                    {
-                        if (dlg.ShowDialog() == DialogResult.OK)
-                            Configuration.SetPassword(dlg.password);
-                        else
-                            return;
-                    }
-                    try_times += 1;
                 }
-                if (try_times > 0)
-                    Logging.save_to_file = false;
+                try_times += 1;
+            }
+            if (try_times > 0)
+                Logging.save_to_file = false;
 #endif
 
-                _controller = new ShadowsocksController();
-                HostMap.Instance().LoadHostFile();
+            _controller = new ShadowsocksController();
+            HostMap.Instance().LoadHostFile();
 
-                // Logging
-                Configuration cfg = _controller.GetConfiguration();
-                Logging.save_to_file = cfg.logEnable;
+            // Logging
+            var cfg = _controller.GetConfiguration();
+            Logging.save_to_file = cfg.logEnable;
 
-                //#if !DEBUG
-                Logging.OpenLogFile();
-                //#endif
+            //#if !DEBUG
+            Logging.OpenLogFile();
+            //#endif
 
 #if !_CONSOLE
-                _viewController = new MenuViewController(_controller);
+            _viewController = new MenuViewController(_controller);
 #endif
 
             _controller.Start();
 
 #if !_CONSOLE
-                //Util.Utils.ReleaseMemory();
+            //Util.Utils.ReleaseMemory();
 
-                Application.Run();
-            }
+            Application.Run();
 #else
             Console.ReadLine();
             _controller.Stop();
@@ -112,7 +101,7 @@ namespace Shadowsocks
                 case PowerModes.Resume:
                     if (_controller != null)
                     {
-                        System.Timers.Timer timer = new System.Timers.Timer(5 * 1000);
+                        var timer = new System.Timers.Timer(5 * 1000);
                         timer.Elapsed += Timer_Elapsed;
                         timer.AutoReset = false;
                         timer.Enabled = true;
@@ -120,7 +109,7 @@ namespace Shadowsocks
                     }
                     break;
                 case PowerModes.Suspend:
-                    if (_controller != null) _controller.Stop();
+                    _controller?.Stop();
                     break;
             }
         }
@@ -129,7 +118,7 @@ namespace Shadowsocks
         {
             try
             {
-                if (_controller != null) _controller.Start();
+                _controller?.Start();
             }
             catch (Exception ex)
             {
@@ -139,7 +128,7 @@ namespace Shadowsocks
             {
                 try
                 {
-                    System.Timers.Timer timer = (System.Timers.Timer)sender;
+                    var timer = (System.Timers.Timer)sender;
                     timer.Enabled = false;
                     timer.Stop();
                     timer.Dispose();
@@ -153,11 +142,11 @@ namespace Shadowsocks
 
         private static void Application_ApplicationExit(object sender, EventArgs e)
         {
-            if (_controller != null) _controller.Stop();
+            _controller?.Stop();
             _controller = null;
         }
 
-        private static int exited = 0;
+        private static int exited;
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             if (Interlocked.Increment(ref exited) == 1)

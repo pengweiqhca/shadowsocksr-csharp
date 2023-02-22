@@ -29,12 +29,12 @@ namespace ZXing.QrCode.Internal
 
       public byte[] DataBytes
       {
-         get { return dataBytes; }
+         get => dataBytes;
       }
 
       public byte[] ErrorCorrectionBytes
       {
-         get { return errorCorrectionBytes; }
+         get => errorCorrectionBytes;
       }
    }
 }

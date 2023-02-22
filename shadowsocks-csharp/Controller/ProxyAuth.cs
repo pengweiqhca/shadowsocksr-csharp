@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Shadowsocks.Model;
 using System.Net;
 using System.Net.Sockets;
-using Shadowsocks.Encryption;
-using Shadowsocks.Obfs;
-using Shadowsocks.Model;
-using System.Timers;
-using System.Threading;
+using System.Text;
 
 namespace Shadowsocks.Controller
 {
@@ -43,7 +37,7 @@ namespace Shadowsocks.Controller
 
         public ProxyAuthHandler(Configuration config, ServerTransferTotal transfer, IPRangeSet IPRange, byte[] firstPacket, int length, Socket socket)
         {
-            int local_port = ((IPEndPoint)socket.LocalEndPoint).Port;
+            var local_port = ((IPEndPoint)socket.LocalEndPoint).Port;
 
             _config = config;
             _transfer = transfer;
@@ -69,7 +63,7 @@ namespace Shadowsocks.Controller
             {
                 if (sock != null)
                 {
-                    Socket s = sock;
+                    var s = sock;
                     sock = null;
                     try
                     {
@@ -118,7 +112,7 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                int bytesRead = _firstPacketLength;
+                var bytesRead = _firstPacketLength;
 
                 if (bytesRead > 1)
                 {
@@ -150,24 +144,24 @@ namespace Shadowsocks.Controller
 
         private void RspSocks4aHandshakeReceive()
         {
-            List<byte> firstPacket = new List<byte>();
-            for (int i = 0; i < _firstPacketLength; ++i)
+            var firstPacket = new List<byte>();
+            for (var i = 0; i < _firstPacketLength; ++i)
             {
                 firstPacket.Add(_firstPacket[i]);
             }
-            List<byte> dataSockSend = firstPacket.GetRange(0, 4);
+            var dataSockSend = firstPacket.GetRange(0, 4);
             dataSockSend[0] = 0;
             dataSockSend[1] = 90;
 
-            bool remoteDNS = (_firstPacket[4] == 0 && _firstPacket[5] == 0 && _firstPacket[6] == 0 && _firstPacket[7] == 1) ? true : false;
+            var remoteDNS = _firstPacket[4] == 0 && _firstPacket[5] == 0 && _firstPacket[6] == 0 && _firstPacket[7] == 1;
             if (remoteDNS)
             {
-                for (int i = 0; i < 4; ++i)
+                for (var i = 0; i < 4; ++i)
                 {
                     dataSockSend.Add(0);
                 }
-                int addrStartPos = firstPacket.IndexOf(0x0, 8);
-                List<byte> addr = firstPacket.GetRange(addrStartPos + 1, firstPacket.Count - addrStartPos - 2);
+                var addrStartPos = firstPacket.IndexOf(0x0, 8);
+                var addr = firstPacket.GetRange(addrStartPos + 1, firstPacket.Count - addrStartPos - 2);
                 _remoteHeaderSendBuffer = new byte[2 + addr.Count + 2];
                 _remoteHeaderSendBuffer[0] = 3;
                 _remoteHeaderSendBuffer[1] = (byte)addr.Count;
@@ -177,7 +171,7 @@ namespace Shadowsocks.Controller
             }
             else
             {
-                for (int i = 0; i < 4; ++i)
+                for (var i = 0; i < 4; ++i)
                 {
                     dataSockSend.Add(_firstPacket[4 + i]);
                 }
@@ -203,10 +197,10 @@ namespace Shadowsocks.Controller
                 Close();
                 return;
             }
-            bool no_auth = false;
-            bool auth = false;
-            bool has_method = false;
-            for (int index = 0; index < _firstPacket[1]; ++index)
+            var no_auth = false;
+            var auth = false;
+            var has_method = false;
+            for (var index = 0; index < _firstPacket[1]; ++index)
             {
                 if (_firstPacket[2 + index] == 0)
                 {
@@ -248,15 +242,15 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                int bytesRead = _connection.Receive(_connetionRecvBuffer, 1024, 0); //_connection.EndReceive(ar);
+                var bytesRead = _connection.Receive(_connetionRecvBuffer, 1024, 0); //_connection.EndReceive(ar);
 
                 if (bytesRead >= 3)
                 {
-                    byte user_len = _connetionRecvBuffer[1];
-                    byte pass_len = _connetionRecvBuffer[user_len + 2];
+                    var user_len = _connetionRecvBuffer[1];
+                    var pass_len = _connetionRecvBuffer[user_len + 2];
                     byte[] response = { 1, 0 };
-                    string user = Encoding.UTF8.GetString(_connetionRecvBuffer, 2, user_len);
-                    string pass = Encoding.UTF8.GetString(_connetionRecvBuffer, user_len + 3, pass_len);
+                    var user = Encoding.UTF8.GetString(_connetionRecvBuffer, 2, user_len);
+                    var pass = Encoding.UTF8.GetString(_connetionRecvBuffer, user_len + 3, pass_len);
                     if (AuthConnection(_connection, user, pass))
                     {
                         _connection.Send(response);
@@ -285,7 +279,7 @@ namespace Shadowsocks.Controller
                 // +----+-----+-------+------+----------+----------+
                 // | 1  |  1  | X'00' |  1   | Variable |    2     |
                 // +----+-----+-------+------+----------+----------+
-                int bytesRead = _connection.Receive(_connetionRecvBuffer, 5, 0);
+                var bytesRead = _connection.Receive(_connetionRecvBuffer, 5, 0);
 
                 if (bytesRead >= 5)
                 {
@@ -293,7 +287,7 @@ namespace Shadowsocks.Controller
                     _remoteHeaderSendBuffer = new byte[bytesRead - 3];
                     Array.Copy(_connetionRecvBuffer, 3, _remoteHeaderSendBuffer, 0, _remoteHeaderSendBuffer.Length);
 
-                    int recv_size = 0;
+                    var recv_size = 0;
                     if (_remoteHeaderSendBuffer[0] == 1)
                         recv_size = 4 - 1;
                     else if (_remoteHeaderSendBuffer[0] == 4)
@@ -321,7 +315,7 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                int bytesRead = _connection.Receive(_connetionRecvBuffer, recv_size, 0);
+                var bytesRead = _connection.Receive(_connetionRecvBuffer, recv_size, 0);
 
                 if (bytesRead > 0)
                 {
@@ -354,8 +348,8 @@ namespace Shadowsocks.Controller
 
         private void RspSocks5UDPHeader(int bytesRead)
         {
-            bool ipv6 = _connection.AddressFamily == AddressFamily.InterNetworkV6;
-            int udpPort = 0;
+            var ipv6 = _connection.AddressFamily == AddressFamily.InterNetworkV6;
+            var udpPort = 0;
             if (bytesRead >= 3 + 6)
             {
                 ipv6 = _remoteHeaderSendBuffer[0] == 4;
@@ -379,8 +373,8 @@ namespace Shadowsocks.Controller
                 _remoteHeaderSendBuffer[18] = (byte)(udpPort % 0x100);
             }
 
-            int port = 0;
-            IPAddress ip = ipv6 ? IPAddress.IPv6Any : IPAddress.Any;
+            var port = 0;
+            var ip = ipv6 ? IPAddress.IPv6Any : IPAddress.Any;
             _connectionUDP = new Socket(ip.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
             for (; port < 65536; ++port)
             {
@@ -400,7 +394,7 @@ namespace Shadowsocks.Controller
                 byte[] response = { 5, 0, 0, 1,
                                 0, 0, 0, 0,
                                 (byte)(port / 0x100), (byte)(port % 0x100) };
-                byte[] ip_bytes = ((IPEndPoint)_connection.LocalEndPoint).Address.GetAddressBytes();
+                var ip_bytes = ((IPEndPoint)_connection.LocalEndPoint).Address.GetAddressBytes();
                 Array.Copy(ip_bytes, 0, response, 4, 4);
                 _connection.Send(response);
                 Connect();
@@ -410,7 +404,7 @@ namespace Shadowsocks.Controller
                 byte[] response = { 5, 0, 0, 4,
                                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                 (byte)(port / 0x100), (byte)(port % 0x100) };
-                byte[] ip_bytes = ((IPEndPoint)_connection.LocalEndPoint).Address.GetAddressBytes();
+                var ip_bytes = ((IPEndPoint)_connection.LocalEndPoint).Address.GetAddressBytes();
                 Array.Copy(ip_bytes, 0, response, 4, 16);
                 _connection.Send(response);
                 Connect();
@@ -438,10 +432,7 @@ namespace Shadowsocks.Controller
         private void RspHttpHandshakeReceive()
         {
             command = 1; // Set TCP connect command
-            if (httpProxyState == null)
-            {
-                httpProxyState = new HttpPraser();
-            }
+            httpProxyState ??= new HttpPraser();
             if (Util.Utils.isMatchSubNet(((IPEndPoint)_connection.RemoteEndPoint).Address, "127.0.0.0/8"))
             {
                 httpProxyState.httpAuthUser = "";
@@ -452,9 +443,9 @@ namespace Shadowsocks.Controller
                 httpProxyState.httpAuthUser = _config.authUser;
                 httpProxyState.httpAuthPass = _config.authPass;
             }
-            for (int i = 1; ; ++i)
+            for (var i = 1; ; ++i)
             {
-                int err = httpProxyState.HandshakeReceive(_firstPacket, _firstPacketLength, ref _remoteHeaderSendBuffer);
+                var err = httpProxyState.HandshakeReceive(_firstPacket, _firstPacketLength, ref _remoteHeaderSendBuffer);
                 if (err == 1)
                 {
                     if (HttpHandshakeRecv())
@@ -462,13 +453,13 @@ namespace Shadowsocks.Controller
                 }
                 else if (err == 2)
                 {
-                    string dataSend = httpProxyState.Http407();
-                    byte[] httpData = System.Text.Encoding.UTF8.GetBytes(dataSend);
+                    var dataSend = httpProxyState.Http407();
+                    var httpData = Encoding.UTF8.GetBytes(dataSend);
                     _connection.Send(httpData);
                     if (HttpHandshakeRecv())
                         break;
                 }
-                else if (err == 3 || err == 4)
+                else if (err is 3 or 4)
                 {
                     Connect();
                     break;
@@ -481,8 +472,8 @@ namespace Shadowsocks.Controller
                 }
                 else if (err == 500)
                 {
-                    string dataSend = httpProxyState.Http500();
-                    byte[] httpData = System.Text.Encoding.UTF8.GetBytes(dataSend);
+                    var dataSend = httpProxyState.Http500();
+                    var httpData = Encoding.UTF8.GetBytes(dataSend);
                     _connection.Send(httpData);
                     if (HttpHandshakeRecv())
                         break;
@@ -499,18 +490,15 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                int bytesRead = _connection.Receive(_connetionRecvBuffer, _firstPacket.Length, 0);
+                var bytesRead = _connection.Receive(_connetionRecvBuffer, _firstPacket.Length, 0);
                 if (bytesRead > 0)
                 {
                     Array.Copy(_connetionRecvBuffer, _firstPacket, bytesRead);
                     _firstPacketLength = bytesRead;
                     return false;
                 }
-                else
-                {
-                    Console.WriteLine("failed to recv data in HttpHandshakeRecv");
-                    Close();
-                }
+                Console.WriteLine("failed to recv data in HttpHandshakeRecv");
+                Close();
             }
             catch (Exception e)
             {
@@ -522,19 +510,31 @@ namespace Shadowsocks.Controller
 
         private void Connect()
         {
-            Handler.GetCurrentServer getCurrentServer = delegate (int localPort, ServerSelectStrategy.FilterFunc filter, string targetURI, bool cfgRandom, bool usingRandom, bool forceRandom) { return _config.GetCurrentServer(localPort, filter, targetURI, cfgRandom, usingRandom, forceRandom); };
-            Handler.KeepCurrentServer keepCurrentServer = delegate (int localPort, string targetURI, string id) { _config.KeepCurrentServer(localPort, targetURI, id); };
+            Server GetCurrentServer(int localPort, ServerSelectStrategy.FilterFunc filter, string targetURI, bool cfgRandom, bool usingRandom, bool forceRandom)
+            {
+                return _config.GetCurrentServer(localPort, filter, targetURI, cfgRandom, usingRandom, forceRandom);
+            }
 
-            int local_port = ((IPEndPoint)_connection.LocalEndPoint).Port;
-            Handler handler = new Handler();
+            void KeepCurrentServer(int localPort, string targetURI, string id)
+            {
+                _config.KeepCurrentServer(localPort, targetURI, id);
+            }
 
-            handler.getCurrentServer = getCurrentServer;
-            handler.keepCurrentServer = keepCurrentServer;
-            handler.connection = new ProxySocketTunLocal(_connection);
-            handler.connectionUDP = _connectionUDP;
-            handler.cfg.reconnectTimesRemain = _config.reconnectTimes;
-            handler.cfg.random = _config.random;
-            handler.cfg.forceRandom = _config.random;
+            var local_port = ((IPEndPoint)_connection.LocalEndPoint).Port;
+            var handler = new Handler
+            {
+                getCurrentServer = GetCurrentServer,
+                keepCurrentServer = KeepCurrentServer,
+                connection = new ProxySocketTunLocal(_connection),
+                connectionUDP = _connectionUDP,
+                cfg =
+                {
+                    reconnectTimesRemain = _config.reconnectTimes,
+                    random = _config.random,
+                    forceRandom = _config.random
+                }
+            };
+
             handler.setServerTransferTotal(_transfer);
             if (_config.proxyEnable)
             {
@@ -558,7 +558,7 @@ namespace Shadowsocks.Controller
             }
             if (_config.GetPortMapCache().ContainsKey(local_port))
             {
-                PortMapConfigCache cfg = _config.GetPortMapCache()[local_port];
+                var cfg = _config.GetPortMapCache()[local_port];
                 if (cfg.server == null || cfg.id == cfg.server.id)
                 {
                     if (cfg.server != null)
@@ -571,8 +571,8 @@ namespace Shadowsocks.Controller
                     }
                     if (cfg.type == PortMapType.Forward) // tunnel
                     {
-                        byte[] addr = System.Text.Encoding.UTF8.GetBytes(cfg.server_addr);
-                        byte[] newFirstPacket = new byte[_firstPacketLength + addr.Length + 4];
+                        var addr = Encoding.UTF8.GetBytes(cfg.server_addr);
+                        var newFirstPacket = new byte[_firstPacketLength + addr.Length + 4];
                         newFirstPacket[0] = 3;
                         newFirstPacket[1] = (byte)addr.Length;
                         Array.Copy(addr, 0, newFirstPacket, 2, addr.Length);
@@ -583,7 +583,7 @@ namespace Shadowsocks.Controller
                         handler.Start(_remoteHeaderSendBuffer, _remoteHeaderSendBuffer.Length, null);
                     }
                     else if (_connectionUDP == null && cfg.type == PortMapType.RuleProxy
-                        && (new Socks5Forwarder(_config, _IPRange)).Handle(_remoteHeaderSendBuffer, _remoteHeaderSendBuffer.Length, _connection, local_sendback_protocol))
+                        && new Socks5Forwarder(_config, _IPRange).Handle(_remoteHeaderSendBuffer, _remoteHeaderSendBuffer.Length, _connection, local_sendback_protocol))
                     {
                     }
                     else

@@ -6,10 +6,7 @@ namespace Shadowsocks.Obfs
 {
     public abstract class ObfsBase: IObfs
     {
-        protected ObfsBase(string method)
-        {
-            Method = method;
-        }
+        protected ObfsBase(string method) => Method = method;
 
         protected string Method;
         protected ServerInfo Server;
@@ -17,20 +14,11 @@ namespace Shadowsocks.Obfs
 
         public abstract Dictionary<string, int[]> GetObfs();
 
-        public string Name()
-        {
-            return Method;
-        }
+        public string Name() => Method;
 
-        public virtual bool isKeepAlive()
-        {
-            return false;
-        }
+        public virtual bool isKeepAlive() => false;
 
-        public virtual bool isAlwaysSendback()
-        {
-            return false;
-        }
+        public virtual bool isAlwaysSendback() => false;
 
 
         public virtual byte[] ClientPreEncrypt(byte[] plaindata, int datalength, out int outlength)
@@ -56,10 +44,7 @@ namespace Shadowsocks.Obfs
             return plaindata;
         }
 
-        public virtual object InitData()
-        {
-            return null;
-        }
+        public virtual object InitData() => null;
         public virtual void SetServerInfo(ServerInfo serverInfo)
         {
             Server = serverInfo;
@@ -70,9 +55,9 @@ namespace Shadowsocks.Obfs
         }
         public static int GetHeadSize(byte[] plaindata, int defaultValue)
         {
-            if (plaindata == null || plaindata.Length < 2)
+            if (plaindata is not { Length: >= 2 })
                 return defaultValue;
-            int head_type = plaindata[0] & 0x7;
+            var head_type = plaindata[0] & 0x7;
             if (head_type == 1)
                 return 7;
             if (head_type == 4)
@@ -83,19 +68,10 @@ namespace Shadowsocks.Obfs
                 return 4 + plaindata[1];
             return defaultValue;
         }
-        public long GetSentLength()
-        {
-            return SentLength;
-        }
-        public virtual int GetOverhead()
-        {
-            return 0;
-        }
+        public long GetSentLength() => SentLength;
+        public virtual int GetOverhead() => 0;
 
-        public int GetTcpMSS()
-        {
-            return Server.tcp_mss;
-        }
+        public int GetTcpMSS() => Server.tcp_mss;
 
 
         #region IDisposable

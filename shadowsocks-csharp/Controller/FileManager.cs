@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Text;
+﻿using System.IO.Compression;
 
 namespace Shadowsocks.Controller
 {
@@ -12,9 +8,9 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                System.IO.FileStream _FileStream =
-                   new System.IO.FileStream(fileName, System.IO.FileMode.Create,
-                                            System.IO.FileAccess.Write);
+                var _FileStream =
+                   new FileStream(fileName, FileMode.Create,
+                                            FileAccess.Write);
                 _FileStream.Write(content, 0, content.Length);
                 _FileStream.Close();
                 return true;
@@ -22,26 +18,25 @@ namespace Shadowsocks.Controller
             catch (Exception _Exception)
             {
                 Console.WriteLine("Exception caught in process: {0}",
-                                  _Exception.ToString());
+                                  _Exception);
             }
             return false;
         }
 
         public static void UncompressFile(string fileName, byte[] content)
         {
-            FileStream destinationFile = File.Create(fileName);
+            var destinationFile = File.Create(fileName);
 
-            // Because the uncompressed size of the file is unknown, 
+            // Because the uncompressed size of the file is unknown,
             // we are using an arbitrary buffer size.
-            byte[] buffer = new byte[4096];
-            int n;
+            var buffer = new byte[4096];
 
-            using (GZipStream input = new GZipStream(new MemoryStream(content),
-                CompressionMode.Decompress, false))
+            using (var input = new GZipStream(new MemoryStream(content),
+                       CompressionMode.Decompress, false))
             {
                 while (true)
                 {
-                    n = input.Read(buffer, 0, buffer.Length);
+                    var n = input.Read(buffer, 0, buffer.Length);
                     if (n == 0)
                     {
                         break;
@@ -57,19 +52,19 @@ namespace Shadowsocks.Controller
             size = 0;
             try
             {
-                MemoryStream memStream = new MemoryStream();
-                using (DeflateStream ds = new DeflateStream(memStream, CompressionMode.Compress))
+                var memStream = new MemoryStream();
+                using (var ds = new DeflateStream(memStream, CompressionMode.Compress))
                 {
                     ds.Write(content, index, count);
                 }
-                byte[] buffer = memStream.ToArray();
+                var buffer = memStream.ToArray();
                 size = buffer.Length;
                 return buffer;
             }
             catch (Exception _Exception)
             {
                 Console.WriteLine("Exception caught in process: {0}",
-                                  _Exception.ToString());
+                                  _Exception);
             }
             return null;
         }
@@ -78,8 +73,8 @@ namespace Shadowsocks.Controller
             size = 0;
             try
             {
-                byte[] buffer = new byte[16384];
-                DeflateStream ds = new DeflateStream(new MemoryStream(content, index, count), CompressionMode.Decompress);
+                var buffer = new byte[16384];
+                var ds = new DeflateStream(new MemoryStream(content, index, count), CompressionMode.Decompress);
                 int readsize;
                 while (true)
                 {
@@ -89,7 +84,7 @@ namespace Shadowsocks.Controller
                         break;
                     }
                     size += readsize;
-                    byte[] newbuffer = new byte[buffer.Length * 2];
+                    var newbuffer = new byte[buffer.Length * 2];
                     buffer.CopyTo(newbuffer, 0);
                     buffer = newbuffer;
                 }
@@ -98,7 +93,7 @@ namespace Shadowsocks.Controller
             catch (Exception _Exception)
             {
                 Console.WriteLine("Exception caught in process: {0}",
-                                  _Exception.ToString());
+                                  _Exception);
             }
             return null;
         }
