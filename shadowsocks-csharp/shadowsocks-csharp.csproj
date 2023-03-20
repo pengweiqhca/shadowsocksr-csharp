@@ -14,6 +14,7 @@
         <UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
         <NoWarn>$(NoWarn);WFAC010</NoWarn>
+        <RollForward>Major</RollForward>
         <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     </PropertyGroup>
 

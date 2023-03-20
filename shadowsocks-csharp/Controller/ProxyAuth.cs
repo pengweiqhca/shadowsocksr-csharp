@@ -287,13 +287,13 @@ namespace Shadowsocks.Controller
                     _remoteHeaderSendBuffer = new byte[bytesRead - 3];
                     Array.Copy(_connetionRecvBuffer, 3, _remoteHeaderSendBuffer, 0, _remoteHeaderSendBuffer.Length);
 
-                    var recv_size = 0;
-                    if (_remoteHeaderSendBuffer[0] == 1)
-                        recv_size = 4 - 1;
-                    else if (_remoteHeaderSendBuffer[0] == 4)
-                        recv_size = 16 - 1;
-                    else if (_remoteHeaderSendBuffer[0] == 3)
-                        recv_size = _remoteHeaderSendBuffer[1];
+                    var recv_size = _remoteHeaderSendBuffer[0] switch
+                    {
+                        1 => 4 - 1,
+                        4 => 16 - 1,
+                        3 => _remoteHeaderSendBuffer[1],
+                        _ => 0
+                    };
                     if (recv_size == 0)
                         throw new Exception("Wrong socks5 addr type");
                     HandshakeReceive3Callback(recv_size + 2); // recv port

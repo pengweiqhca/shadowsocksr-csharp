@@ -140,23 +140,13 @@ namespace ZXing
                 for (var x = 0; x < width; x++)
                 {
                     var luminance = row[x] & 0xFF;
-                    char c;
-                    if (luminance < 0x40)
+                    char c = luminance switch
                     {
-                        c = '#';
-                    }
-                    else if (luminance < 0x80)
-                    {
-                        c = '+';
-                    }
-                    else if (luminance < 0xC0)
-                    {
-                        c = '.';
-                    }
-                    else
-                    {
-                        c = ' ';
-                    }
+                        < 0x40 => '#',
+                        < 0x80 => '+',
+                        < 0xC0 => '.',
+                        _ => ' '
+                    };
                     result.Append(c);
                 }
                 result.Append('\n');

@@ -58,24 +58,19 @@ namespace Shadowsocks.View
             var dpi_mul = Util.Utils.GetDpiMul();
 
             var config = controller.GetCurrentConfiguration();
-            if (config.configs.Count < 8)
+            Height = config.configs.Count switch
             {
-                Height = 300 * dpi_mul / 4;
-            }
-            else if (config.configs.Count < 20)
-            {
-                Height = (300 + (config.configs.Count - 8) * 16) * dpi_mul / 4;
-            }
-            else
-            {
-                Height = 500 * dpi_mul / 4;
-            }
+                < 8 => 300 * dpi_mul / 4,
+                < 20 => (300 + (config.configs.Count - 8) * 16) * dpi_mul / 4,
+                _ => 500 * dpi_mul / 4
+            };
             UpdateTexts();
             UpdateLog();
 
-            MainMenuStrip = new MenuStrip();
-            MainMenuStrip.Items.AddRange(new[] {
-                CreateMenuGroup("&Control", new ToolStripItem[] {
+            Controls.Add(MainMenuStrip = new MenuStrip());
+            MainMenuStrip.Items.AddRange(new ToolStripItem[]
+            {
+                CreateMenuGroup("&Control",
                     CreateMenuItem("&Disconnect direct connections", DisconnectForward_Click),
                     CreateMenuItem("Disconnect &All", Disconnect_Click),
                     new ToolStripSeparator(),
@@ -83,18 +78,15 @@ namespace Shadowsocks.View
                     clearItem = CreateMenuItem("&Clear", ClearItem_Click),
                     new ToolStripSeparator(),
                     CreateMenuItem("Clear &Selected Total", ClearSelectedTotal_Click),
-                    CreateMenuItem("Clear &Total", ClearTotal_Click),
-                }),
-                CreateMenuGroup("Port &out", new[] {
+                    CreateMenuItem("Clear &Total", ClearTotal_Click)),
+                CreateMenuGroup("Port &out",
                     CreateMenuItem("Copy current link", copyLinkItem_Click),
                     CreateMenuItem("Copy current group links", copyGroupLinkItem_Click),
                     CreateMenuItem("Copy all enable links", copyEnableLinksItem_Click),
-                    CreateMenuItem("Copy all links", copyLinksItem_Click),
-                }),
-                CreateMenuGroup("&Window", new[] {
+                    CreateMenuItem("Copy all links", copyLinksItem_Click)),
+                CreateMenuGroup("&Window",
                     CreateMenuItem("Auto &size", autosizeItem_Click),
-                    topmostItem = CreateMenuItem("Always On &Top", topmostItem_Click),
-                }),
+                    topmostItem = CreateMenuItem("Always On &Top", topmostItem_Click)),
             });
             controller.ConfigChanged += controller_ConfigChanged;
 
@@ -115,7 +107,7 @@ namespace Shadowsocks.View
             Width = width + SystemInformation.VerticalScrollBarWidth + (Width - ClientSize.Width) + 1;
             ServerDataGrid.AutoResizeColumnHeadersHeight();
         }
-        private ToolStripMenuItem CreateMenuGroup(string text, ToolStripItem[] items) => new(I18N.GetString(text), null, items);
+        private ToolStripMenuItem CreateMenuGroup(string text, params ToolStripItem[] dropDownItems) => new(I18N.GetString(text), null, dropDownItems);
 
         private ToolStripMenuItem CreateMenuItem(string text, EventHandler click) => new(I18N.GetString(text), null, click);
 
@@ -148,19 +140,18 @@ namespace Shadowsocks.View
 
             if (bytes >= M * 990)
             {
-                if (bytes >= G * 990)
+                return bytes switch
                 {
-                    if (bytes >= P * 990)
-                        return $"{bytes / (double)E:F3}E";
-                    if (bytes >= T * 990)
-                        return $"{bytes / (double)P:F3}P";
-                    return $"{bytes / (double)T:F3}T";
-                }
-                if (bytes >= G * 99)
-                    return $"{bytes / (double)G:F2}G";
-                if (bytes >= G * 9)
-                    return $"{bytes / (double)G:F3}G";
-                return $"{bytes / (double)G:F4}G";
+                    >= G * 990 => bytes switch
+                    {
+                        >= P * 990 => $"{bytes / (double)E:F3}E",
+                        >= T * 990 => $"{bytes / (double)P:F3}P",
+                        _ => $"{bytes / (double)T:F3}T"
+                    },
+                    >= G * 99 => $"{bytes / (double)G:F2}G",
+                    >= G * 9 => $"{bytes / (double)G:F3}G",
+                    _ => $"{bytes / (double)G:F4}G"
+                };
             }
             if (bytes >= K * 990)
             {

@@ -664,14 +664,12 @@ namespace Shadowsocks.Obfs
 
         public override int GetOverhead() => overhead;
 
-        protected MbedTLS.HMAC CreateHMAC(byte[] key)
+        protected MbedTLS.HMAC CreateHMAC(byte[] key) => Method switch
         {
-            if (Method == "auth_aes128_md5")
-                return new MbedTLS.HMAC_MD5(key);
-            if (Method == "auth_aes128_sha1")
-                return new MbedTLS.HMAC_SHA1(key);
-            return null;
-        }
+            "auth_aes128_md5" => new MbedTLS.HMAC_MD5(key),
+            "auth_aes128_sha1" => new MbedTLS.HMAC_SHA1(key),
+            _ => null
+        };
 
         protected void Sync()
         {

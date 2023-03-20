@@ -120,19 +120,12 @@ namespace ZXing.QrCode.Internal
                 throw new ArgumentException("Character count doesn't apply to this mode");
             }
             var number = version.VersionNumber;
-            int offset;
-            if (number <= 9)
+            int offset = number switch
             {
-                offset = 0;
-            }
-            else if (number <= 26)
-            {
-                offset = 1;
-            }
-            else
-            {
-                offset = 2;
-            }
+                <= 9 => 0,
+                <= 26 => 1,
+                _ => 2
+            };
             return characterCountBitsForVersions[offset];
         }
 

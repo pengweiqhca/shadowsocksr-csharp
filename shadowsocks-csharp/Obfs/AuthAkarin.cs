@@ -83,13 +83,13 @@ namespace Shadowsocks.Obfs
             if (datalength >= 1440 || datalength + Server.overhead == recv_tcp_mss)
                 return 0;
             random.init_from_bin(last_hash, datalength);
-            if (datalength > 1300)
-                return (int)(random.next() % 31);
-            if (datalength > 900)
-                return (int)(random.next() % 127);
-            if (datalength > 400)
-                return (int)(random.next() % 521);
-            return (int)(random.next() % (ulong)(send_tcp_mss - datalength - Server.overhead));
+            return datalength switch
+            {
+                > 1300 => (int)(random.next() % 31),
+                > 900 => (int)(random.next() % 127),
+                > 400 => (int)(random.next() % 521),
+                _ => (int)(random.next() % (ulong)(send_tcp_mss - datalength - Server.overhead))
+            };
             //return (int)(random.next() % 1021);
         }
 
@@ -103,13 +103,13 @@ namespace Shadowsocks.Obfs
             if (datalength >= 1440 || datalength + Server.overhead == recv_tcp_mss)
                 return 0;
             random.init_from_bin(last_hash, datalength);
-            if (datalength > 1300)
-                return (int)(random.next() % 31);
-            if (datalength > 900)
-                return (int)(random.next() % 127);
-            if (datalength > 400)
-                return (int)(random.next() % 521);
-            return (int)(random.next() % (ulong)(recv_tcp_mss - datalength - Server.overhead));
+            return datalength switch
+            {
+                > 1300 => (int)(random.next() % 31),
+                > 900 => (int)(random.next() % 127),
+                > 400 => (int)(random.next() % 521),
+                _ => (int)(random.next() % (ulong)(recv_tcp_mss - datalength - Server.overhead))
+            };
             //return (int)(random.next() % 1021);
         }
 
@@ -632,13 +632,13 @@ namespace Shadowsocks.Obfs
             {
                 return 0;
             }
-            if (datalength > 1300)
-                return (int)(random.next() % 31);
-            if (datalength > 900)
-                return (int)(random.next() % 127);
-            if (datalength > 400)
-                return (int)(random.next() % 521);
-            return (int)(random.next() % 1021);
+            return datalength switch
+            {
+                > 1300 => (int)(random.next() % 31),
+                > 900 => (int)(random.next() % 127),
+                > 400 => (int)(random.next() % 521),
+                _ => (int)(random.next() % 1021)
+            };
         }
 
         protected override int GetRecvRandLen(int datalength, xorshift128plus random, byte[] last_hash)
@@ -669,13 +669,13 @@ namespace Shadowsocks.Obfs
             {
                 return 0;
             }
-            if (datalength > 1300)
-                return (int)(random.next() % 31);
-            if (datalength > 900)
-                return (int)(random.next() % 127);
-            if (datalength > 400)
-                return (int)(random.next() % 521);
-            return (int)(random.next() % 1021);
+            return datalength switch
+            {
+                > 1300 => (int)(random.next() % 31),
+                > 900 => (int)(random.next() % 127),
+                > 400 => (int)(random.next() % 521),
+                _ => (int)(random.next() % 1021)
+            };
         }
 
     }

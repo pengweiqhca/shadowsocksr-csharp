@@ -119,13 +119,13 @@ namespace Shadowsocks.Obfs
             if (datalength > 1440)
                 return 0;
             random.init_from_bin(last_hash, datalength);
-            if (datalength > 1300)
-                return (int)(random.next() % 31);
-            if (datalength > 900)
-                return (int)(random.next() % 127);
-            if (datalength > 400)
-                return (int)(random.next() % 521);
-            return (int)(random.next() % 1021);
+            return datalength switch
+            {
+                > 1300 => (int)(random.next() % 31),
+                > 900 => (int)(random.next() % 127),
+                > 400 => (int)(random.next() % 521),
+                _ => (int)(random.next() % 1021)
+            };
         }
 
         protected int UdpGetRandLen(xorshift128plus random, byte[] last_hash)
@@ -626,13 +626,13 @@ namespace Shadowsocks.Obfs
             {
                 return 0;
             }
-            if (datalength > 1300)
-                return (int)(random.next() % 31);
-            if (datalength > 900)
-                return (int)(random.next() % 127);
-            if (datalength > 400)
-                return (int)(random.next() % 521);
-            return (int)(random.next() % 1021);
+            return datalength switch
+            {
+                > 1300 => (int)(random.next() % 31),
+                > 900 => (int)(random.next() % 127),
+                > 400 => (int)(random.next() % 521),
+                _ => (int)(random.next() % 1021)
+            };
         }
 
     }
@@ -684,15 +684,14 @@ namespace Shadowsocks.Obfs
             random.init_from_bin(last_hash, datalength);
             if (other_data_size >= data_size_list0[^1])
             {
-                if (datalength >= 1440)
-                    return 0;
-                if (datalength > 1300)
-                    return (int)(random.next() % 31);
-                if (datalength > 900)
-                    return (int)(random.next() % 127);
-                if (datalength > 400)
-                    return (int)(random.next() % 521);
-                return (int)(random.next() % 1021);
+                return datalength switch
+                {
+                    >= 1440 => 0,
+                    > 1300 => (int)(random.next() % 31),
+                    > 900 => (int)(random.next() % 127),
+                    > 400 => (int)(random.next() % 521),
+                    _ => (int)(random.next() % 1021)
+                };
             }
 
             var pos = FindPos(data_size_list0, other_data_size);

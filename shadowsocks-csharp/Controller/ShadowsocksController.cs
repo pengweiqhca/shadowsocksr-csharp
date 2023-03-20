@@ -506,10 +506,8 @@ namespace Shadowsocks.Controller
         /// </summary>
         public void DisconnectAllConnections()
         {
-            var config = GetCurrentConfiguration();
-            for (var id = 0; id < config.configs.Count; ++id)
+            foreach (var server in GetCurrentConfiguration().configs)
             {
-                var server = config.configs[id];
                 server.GetConnections().CloseAll();
             }
         }

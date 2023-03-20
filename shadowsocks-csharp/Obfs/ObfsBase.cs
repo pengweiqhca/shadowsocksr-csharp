@@ -1,10 +1,6 @@
-﻿
-using System;
-using System.Collections.Generic;
-
-namespace Shadowsocks.Obfs
+﻿namespace Shadowsocks.Obfs
 {
-    public abstract class ObfsBase: IObfs
+    public abstract class ObfsBase : IObfs
     {
         protected ObfsBase(string method) => Method = method;
 
@@ -58,15 +54,14 @@ namespace Shadowsocks.Obfs
             if (plaindata is not { Length: >= 2 })
                 return defaultValue;
             var head_type = plaindata[0] & 0x7;
-            if (head_type == 1)
-                return 7;
-            if (head_type == 4)
-                return 19;
-            if (head_type == 3)
-                return 4 + plaindata[1];
-            if (head_type == 2)
-                return 4 + plaindata[1];
-            return defaultValue;
+            return head_type switch
+            {
+                1 => 7,
+                4 => 19,
+                3 => 4 + plaindata[1],
+                2 => 4 + plaindata[1],
+                _ => defaultValue
+            };
         }
         public long GetSentLength() => SentLength;
         public virtual int GetOverhead() => 0;

@@ -153,21 +153,12 @@ namespace Shadowsocks.View
             }
             catch
             {
-                Bitmap icon = null;
-                if (dpi < 97)
+                Bitmap icon = dpi switch
                 {
-                    // dpi = 96;
-                    icon = Resources.ss16;
-                }
-                else if (dpi < 121)
-                {
-                    // dpi = 120;
-                    icon = Resources.ss20;
-                }
-                else
-                {
-                    icon = Resources.ss24;
-                }
+                    < 97 => Resources.ss16,
+                    < 121 => Resources.ss20,
+                    _ => Resources.ss24
+                };
                 double mul_a = 1.0, mul_r = 1.0, mul_g = 1.0, mul_b = 1.0;
                 if (!enabled)
                 {
@@ -212,20 +203,20 @@ namespace Shadowsocks.View
 
         private ToolStripMenuItem CreateMenuItem(string text, EventHandler click) => new(I18N.GetString(text), null, click);
 
-        private ToolStripMenuItem CreateMenuGroup(string text, ToolStripItem[] items) => new(I18N.GetString(text), null, items);
+        private ToolStripMenuItem CreateMenuGroup(string text, params ToolStripItem[] dropDownItems) => new(I18N.GetString(text), null, dropDownItems);
 
         private void LoadMenu()
         {
             contextMenu1 = new ContextMenuStrip();
-            contextMenu1.Items.AddRange(new ToolStripItem[] {
-                CreateMenuGroup("Mode", new ToolStripItem[] {
+            contextMenu1.Items.AddRange(new ToolStripItem[]
+            {
+                CreateMenuGroup("Mode",
                     enableItem = CreateMenuItem("Disable system proxy", EnableItem_Click),
                     PACModeItem = CreateMenuItem("PAC", PACModeItem_Click),
                     globalModeItem = CreateMenuItem("Global", GlobalModeItem_Click),
                     new ToolStripSeparator(),
-                    noModifyItem = CreateMenuItem("No modify system proxy", NoModifyItem_Click)
-                }),
-                CreateMenuGroup("PAC ", new ToolStripItem[] {
+                    noModifyItem = CreateMenuItem("No modify system proxy", NoModifyItem_Click)),
+                CreateMenuGroup("PAC ",
                     CreateMenuItem("Update local PAC from Lan IP list", UpdatePACFromLanIPListItem_Click),
                     new ToolStripSeparator(),
                     CreateMenuItem("Update local PAC from Chn White list", UpdatePACFromCNWhiteListItem_Click),
@@ -236,18 +227,15 @@ namespace Shadowsocks.View
                     new ToolStripSeparator(),
                     CreateMenuItem("Copy PAC URL", CopyPACURLItem_Click),
                     CreateMenuItem("Edit local PAC file...", EditPACFileItem_Click),
-                    CreateMenuItem("Edit user rule for GFWList...", EditUserRuleFileForGFWListItem_Click),
-                }),
-                CreateMenuGroup("Proxy rule", new ToolStripItem[] {
+                    CreateMenuItem("Edit user rule for GFWList...", EditUserRuleFileForGFWListItem_Click)),
+                CreateMenuGroup("Proxy rule",
                     ruleBypassLan = CreateMenuItem("Bypass LAN", RuleBypassLanItem_Click),
                     ruleBypassChina = CreateMenuItem("Bypass LAN && China", RuleBypassChinaItem_Click),
                     ruleBypassNotChina = CreateMenuItem("Bypass LAN && not China", RuleBypassNotChinaItem_Click),
                     ruleUser = CreateMenuItem("User custom", RuleUserItem_Click),
                     new ToolStripSeparator(),
-                    ruleDisableBypass = CreateMenuItem("Disable bypass", RuleBypassDisableItem_Click),
-                }),
-                new ToolStripSeparator(),
-                ServersItem = CreateMenuGroup("Servers", new ToolStripItem[] {
+                    ruleDisableBypass = CreateMenuItem("Disable bypass", RuleBypassDisableItem_Click)),
+                new ToolStripSeparator(), ServersItem = CreateMenuGroup("Servers",
                     SeperatorItem = new ToolStripSeparator(),
                     CreateMenuItem("Edit servers...", Config_Click),
                     CreateMenuItem("Import servers from file...", Import_Click),
@@ -255,22 +243,13 @@ namespace Shadowsocks.View
                     sameHostForSameTargetItem = CreateMenuItem("Same host for same address", SelectSameHostForSameTargetItem_Click),
                     new ToolStripSeparator(),
                     CreateMenuItem("Server statistic...", ShowServerLogItem_Click),
-                    CreateMenuItem("Disconnect current", DisconnectCurrent_Click),
-                }),
-                CreateMenuGroup("Servers Subscribe", new[] {
+                    CreateMenuItem("Disconnect current", DisconnectCurrent_Click)),
+                CreateMenuGroup("Servers Subscribe",
                     CreateMenuItem("Subscribe setting...", SubscribeSetting_Click),
                     CreateMenuItem("Update subscribe SSR node", CheckNodeUpdate_Click),
-                    CreateMenuItem("Update subscribe SSR node(bypass proxy)", CheckNodeUpdateBypassProxy_Click),
-                }),
-                SelectRandomItem = CreateMenuItem("Load balance", SelectRandomItem_Click),
-                CreateMenuItem("Global settings...", Setting_Click),
-                CreateMenuItem("Port settings...", ShowPortMapItem_Click),
-                UpdateItem = CreateMenuItem("Update available", UpdateItem_Clicked),
-                new ToolStripSeparator(),
-                CreateMenuItem("Scan QRCode from screen...", ScanQRCodeItem_Click),
-                CreateMenuItem("Import SSR links from clipboard...", CopyAddress_Click),
-                new ToolStripSeparator(),
-                CreateMenuGroup("Help", new ToolStripItem[] {
+                    CreateMenuItem("Update subscribe SSR node(bypass proxy)", CheckNodeUpdateBypassProxy_Click)),
+                SelectRandomItem = CreateMenuItem("Load balance", SelectRandomItem_Click), CreateMenuItem("Global settings...", Setting_Click), CreateMenuItem("Port settings...", ShowPortMapItem_Click), UpdateItem = CreateMenuItem("Update available", UpdateItem_Clicked), new ToolStripSeparator(),
+                CreateMenuItem("Scan QRCode from screen...", ScanQRCodeItem_Click), CreateMenuItem("Import SSR links from clipboard...", CopyAddress_Click), new ToolStripSeparator(), CreateMenuGroup("Help",
                     CreateMenuItem("Check update", CheckUpdate_Click),
                     CreateMenuItem("Show logs...", ShowLogItem_Click),
                     CreateMenuItem("Open wiki...", OpenWiki_Click),
@@ -280,8 +259,7 @@ namespace Shadowsocks.View
                     CreateMenuItem("Reset password...", ResetPasswordItem_Click),
                     new ToolStripSeparator(),
                     CreateMenuItem("About...", AboutItem_Click),
-                    CreateMenuItem("Donate...", DonateItem_Click),
-                }),
+                    CreateMenuItem("Donate...", DonateItem_Click)),
                 CreateMenuItem("Quit", Quit_Click)
             });
             UpdateItem.Visible = false;
@@ -694,7 +672,7 @@ namespace Shadowsocks.View
                 }
                 else
                 {
-                    group[group_name] = new ToolStripMenuItem(group_name, null, new ToolStripMenuItem[1] { item });
+                    group[group_name] = new ToolStripMenuItem(group_name, null, item);
                 }
             }
             {

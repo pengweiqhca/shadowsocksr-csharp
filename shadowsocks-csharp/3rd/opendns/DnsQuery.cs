@@ -185,7 +185,7 @@ namespace OpenDNS
             ///Fill Question Section
 
             //Set Domain Name to Query
-            var tokens = Domain.Split(new[] { '.' });
+            var tokens = Domain.Split('.');
             string label;
 
             var Cursor = 12;
@@ -298,7 +298,7 @@ namespace OpenDNS
                     //Get IP Address Blocks
                     {
                         var bs = new[] { (byte)(data[position++] & byte.MaxValue), (byte)(data[position++] & byte.MaxValue), (byte)(data[position++] & byte.MaxValue), (byte)(data[position++] & byte.MaxValue) };
-                        var ResourceAddress = string.Concat(new object[] { bs[0], ".", bs[1], ".", bs[2], ".", bs[3] });
+                        var ResourceAddress = string.Concat(bs[0], ".", bs[1], ".", bs[2], ".", bs[3]);
 
                         var rrA = new Address(ResourceName, ResourceType, ResourceClass, TTL_Seconds, ResourceAddress);
                         Container.Add(rrA);

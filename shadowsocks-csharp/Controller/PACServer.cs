@@ -168,10 +168,12 @@ namespace Shadowsocks.Controller
 
                 if (_config is { pacDirectGoProxy: true, proxyEnable: true })
                 {
-                    if (_config.proxyType == 0)
-                        pac = pac.Replace("__DIRECT__", $"SOCKS5 {_config.proxyHost}:{_config.proxyPort};DIRECT;");
-                    else if (_config.proxyType == 1)
-                        pac = pac.Replace("__DIRECT__", $"PROXY {_config.proxyHost}:{_config.proxyPort};DIRECT;");
+                    pac = _config.proxyType switch
+                    {
+                        0 => pac.Replace("__DIRECT__", $"SOCKS5 {_config.proxyHost}:{_config.proxyPort};DIRECT;"),
+                        1 => pac.Replace("__DIRECT__", $"PROXY {_config.proxyHost}:{_config.proxyPort};DIRECT;"),
+                        _ => pac
+                    };
                 }
                 else
                     pac = pac.Replace("__DIRECT__", "DIRECT;");
@@ -249,28 +251,25 @@ Connection: Close
 
         private string GetPACAddress(byte[] requestBuf, int length, IPEndPoint localEndPoint, int socksType)
         {
-            //try
-            //{
-            //    string requestString = Encoding.UTF8.GetString(requestBuf);
-            //    if (requestString.IndexOf("AppleWebKit") >= 0)
-            //    {
-            //        string address = "" + localEndPoint.Address + ":" + config.GetCurrentServer().local_port;
-            //        proxy = "SOCKS5 " + address + "; SOCKS " + address + ";";
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(e);
-            //}
-            if (socksType == 5)
+            return socksType switch
             {
-                return $"SOCKS5 {localEndPoint.Address}:{_config.localPort};";
-            }
-            if (socksType == 4)
-            {
-                return $"SOCKS {localEndPoint.Address}:{_config.localPort};";
-            }
-            return $"PROXY {localEndPoint.Address}:{_config.localPort};";
+                //try
+                //{
+                //    string requestString = Encoding.UTF8.GetString(requestBuf);
+                //    if (requestString.IndexOf("AppleWebKit") >= 0)
+                //    {
+                //        string address = "" + localEndPoint.Address + ":" + config.GetCurrentServer().local_port;
+                //        proxy = "SOCKS5 " + address + "; SOCKS " + address + ";";
+                //    }
+                //}
+                //catch (Exception e)
+                //{
+                //    Console.WriteLine(e);
+                //}
+                5 => $"SOCKS5 {localEndPoint.Address}:{_config.localPort};",
+                4 => $"SOCKS {localEndPoint.Address}:{_config.localPort};",
+                _ => $"PROXY {localEndPoint.Address}:{_config.localPort};"
+            };
         }
     }
 }
