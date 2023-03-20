@@ -46,7 +46,7 @@ namespace Shadowsocks.View
                     cmbEncryption.Items.Add(name);
             }
             UpdateTexts();
-            controller.ConfigChanged += controller_ConfigChanged;
+            controller.ConfigChanged += LoadCurrentConfiguration;
 
             LoadCurrentConfiguration();
             if (_modifiedConfiguration.index >= 0 && _modifiedConfiguration.index < _modifiedConfiguration.configs.Count)
@@ -175,11 +175,6 @@ namespace Shadowsocks.View
             btnCancel.Text = I18N.GetString("Cancel");
             llbUpdate.MaximumSize = new Size(lstServers.Width, lstServers.Height);
             llbUpdate.Text = string.Format(I18N.GetString("New version {0} {1} available"), UpdateChecker.Name, updateChecker.LatestVersionNumber);
-        }
-
-        private void controller_ConfigChanged(object sender, EventArgs e)
-        {
-            LoadCurrentConfiguration();
         }
 
         private void ShowWindow()
@@ -558,7 +553,7 @@ namespace Shadowsocks.View
 
         private void ConfigForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            controller.ConfigChanged -= controller_ConfigChanged;
+            controller.ConfigChanged -= LoadCurrentConfiguration;
         }
 
         private void UpButton_Click(object sender, EventArgs e)

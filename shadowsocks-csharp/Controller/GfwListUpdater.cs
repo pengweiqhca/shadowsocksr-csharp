@@ -25,16 +25,9 @@ namespace Shadowsocks.Controller
 
         public int update_type;
 
-        public event EventHandler<ResultEventArgs> UpdateCompleted;
+        public Action<bool> UpdateCompleted;
 
-        public event ErrorEventHandler Error;
-
-        public class ResultEventArgs : EventArgs
-        {
-            public bool Success;
-
-            public ResultEventArgs(bool success) => Success = success;
-        }
+        public Action<Exception> Error;
 
         private async Task http_DownloadGFWTemplateCompleted(Task<string> task)
         {
@@ -53,12 +46,12 @@ namespace Shadowsocks.Controller
                 }
                 else
                 {
-                    Error(this, new ErrorEventArgs(new Exception("Download ERROR")));
+                    Error(new Exception("Download ERROR"));
                 }
             }
             catch (Exception ex)
             {
-                Error?.Invoke(this, new ErrorEventArgs(ex));
+                Error?.Invoke(ex);
             }
         }
 
@@ -115,7 +108,7 @@ namespace Shadowsocks.Controller
                     if (original == abpContent)
                     {
                         update_type = 0;
-                        UpdateCompleted(this, new ResultEventArgs(false));
+                        UpdateCompleted(false);
                         return;
                     }
                 }
@@ -127,7 +120,7 @@ namespace Shadowsocks.Controller
                 if (UpdateCompleted != null)
                 {
                     update_type = 0;
-                    UpdateCompleted(this, new ResultEventArgs(true));
+                    UpdateCompleted(true);
                 }
             }
             catch (Exception ex)
@@ -140,7 +133,7 @@ namespace Shadowsocks.Controller
                     }
                     else
                     {
-                        Error(this, new ErrorEventArgs(ex));
+                        Error(ex);
                     }
                 }
             }
@@ -162,7 +155,7 @@ namespace Shadowsocks.Controller
                     if (original == content)
                     {
                         update_type = 1;
-                        UpdateCompleted(this, new ResultEventArgs(false));
+                        UpdateCompleted(false);
                         return;
                     }
                 }
@@ -174,12 +167,12 @@ namespace Shadowsocks.Controller
                 if (UpdateCompleted != null)
                 {
                     update_type = 1;
-                    UpdateCompleted(this, new ResultEventArgs(true));
+                    UpdateCompleted(true);
                 }
             }
             catch (Exception ex)
             {
-                Error?.Invoke(this, new ErrorEventArgs(ex));
+                Error?.Invoke(ex);
             }
 
         }
@@ -228,7 +221,7 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public async void UpdatePACFromGFWList(Configuration config, string url)
+        public async Task UpdatePACFromGFWList(Configuration config, string url)
         {
             var proxy = new WebProxy(IPAddress.Loopback.ToString(), config.localPort);
             if (!string.IsNullOrEmpty(config.authPass))

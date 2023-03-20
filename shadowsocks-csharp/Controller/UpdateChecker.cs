@@ -12,7 +12,7 @@ namespace Shadowsocks.Controller
 
         public string LatestVersionNumber;
         public string LatestVersionURL;
-        public event EventHandler NewVersionFound;
+        public Action NewVersionFound;
 
         public const string Name = "ShadowsocksR";
         public const string Copyright = "Copyright © Akkariiin 2019 & BreakWa11 2017. Fork from Shadowsocks by clowwindy";
@@ -25,7 +25,7 @@ namespace Shadowsocks.Controller
 
         private static readonly bool UseProxy = true;
 
-        public async void CheckUpdate(Configuration config)
+        public async Task CheckUpdate(Configuration config)
         {
             try
             {
@@ -174,12 +174,12 @@ namespace Shadowsocks.Controller
                 SortVersions(versions);
                 LatestVersionURL = versions[^1];
                 LatestVersionNumber = ParseVersionFromURL(LatestVersionURL);
-                NewVersionFound?.Invoke(this, EventArgs.Empty);
+                NewVersionFound?.Invoke();
             }
             catch (Exception ex)
             {
                 Logging.Debug(ex.ToString());
-                NewVersionFound?.Invoke(this, EventArgs.Empty);
+                NewVersionFound?.Invoke();
             }
         }
     }

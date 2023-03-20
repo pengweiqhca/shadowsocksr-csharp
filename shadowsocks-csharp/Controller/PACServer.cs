@@ -16,17 +16,11 @@ namespace Shadowsocks.Controller
         public static string USER_ABP_FILE = "abp.txt";
 
         FileSystemWatcher PACFileWatcher;
-        FileSystemWatcher UserRuleFileWatcher;
         private Configuration _config;
 
-        public event EventHandler PACFileChanged;
-        public event EventHandler UserRuleFileChanged;
+        public Action PACFileChanged;
 
-        public PACServer()
-        {
-            WatchPacFile();
-            WatchUserRuleFile();
-        }
+        public PACServer() => WatchPacFile();
 
         public void UpdateConfiguration(Configuration config)
         {
@@ -224,29 +218,9 @@ Connection: Close
             PACFileWatcher.EnableRaisingEvents = true;
         }
 
-        private void WatchUserRuleFile()
-        {
-            UserRuleFileWatcher?.Dispose();
-            UserRuleFileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory())
-            {
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
-                Filter = USER_RULE_FILE
-            };
-            UserRuleFileWatcher.Changed += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.Created += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.Deleted += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.Renamed += UserRuleFileWatcher_Changed;
-            UserRuleFileWatcher.EnableRaisingEvents = true;
-        }
-
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            PACFileChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void UserRuleFileWatcher_Changed(object sender, FileSystemEventArgs e)
-        {
-            UserRuleFileChanged?.Invoke(this, EventArgs.Empty);
+            PACFileChanged?.Invoke();
         }
 
         private string GetPACAddress(byte[] requestBuf, int length, IPEndPoint localEndPoint, int socksType)

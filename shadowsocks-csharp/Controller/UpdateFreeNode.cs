@@ -7,14 +7,14 @@ namespace Shadowsocks.Controller
     {
         private const string UpdateURL = "https://raw.githubusercontent.com/shadowsocksrr/breakwa11.github.io/master/free/freenodeplain.txt";
 
-        public event EventHandler NewFreeNodeFound;
+        public Action NewFreeNodeFound;
         public string FreeNodeResult;
         public ServerSubscribe subscribeTask;
         public bool noitify;
 
         public const string Name = "ShadowsocksR";
 
-        public async void CheckUpdate(Configuration config, ServerSubscribe subscribeTask, bool use_proxy, bool noitify)
+        public async Task CheckUpdate(Configuration config, ServerSubscribe subscribeTask, bool use_proxy, bool noitify)
         {
             FreeNodeResult = null;
             this.noitify = noitify;
@@ -64,64 +64,31 @@ namespace Shadowsocks.Controller
             try
             {
                 FreeNodeResult = await task;
-
-                NewFreeNodeFound?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {
                 Logging.Debug(ex.ToString());
-                NewFreeNodeFound?.Invoke(this, EventArgs.Empty);
             }
+
+            NewFreeNodeFound?.Invoke();
         }
     }
 
     public class UpdateSubscribeManager
     {
-        private Configuration _config;
-        private List<ServerSubscribe> _serverSubscribes;
-        private UpdateFreeNode _updater;
         private string _URL;
-        private bool _use_proxy;
-        public bool _noitify;
 
-        public void CreateTask(Configuration config, UpdateFreeNode updater, int index, bool use_proxy, bool noitify)
+        public async Task CreateTask(Configuration config, UpdateFreeNode updater, bool use_proxy, bool noitify)
         {
-            if (_config == null)
-            {
-                _config = config;
-                _updater = updater;
-                _use_proxy = use_proxy;
-                _noitify = noitify;
-                if (index < 0)
-                {
-                    _serverSubscribes = new List<ServerSubscribe>();
-                    for (var i = 0; i < config.serverSubscribes.Count; ++i)
-                    {
-                        _serverSubscribes.Add(config.serverSubscribes[i]);
-                    }
-                }
-                else if (index < _config.serverSubscribes.Count)
-                {
-                    _serverSubscribes = new List<ServerSubscribe>
-                    {
-                        config.serverSubscribes[index]
-                    };
-                }
-                Next();
-            }
-        }
+            var serverSubscribes = new List<ServerSubscribe>();
+            serverSubscribes.AddRange(config.serverSubscribes);
 
-        public bool Next()
-        {
-            if (_serverSubscribes.Count == 0)
+            foreach (var subscribe in serverSubscribes)
             {
-                _config = null;
-                return false;
+                _URL = subscribe.URL;
+
+                await updater.CheckUpdate(config, subscribe, use_proxy, noitify);
             }
-            _URL = _serverSubscribes[0].URL;
-            _updater.CheckUpdate(_config, _serverSubscribes[0], _use_proxy, _noitify);
-            _serverSubscribes.RemoveAt(0);
-            return true;
         }
 
         public string URL

@@ -140,7 +140,7 @@ namespace ZXing
                 for (var x = 0; x < width; x++)
                 {
                     var luminance = row[x] & 0xFF;
-                    char c = luminance switch
+                    var c = luminance switch
                     {
                         < 0x40 => '#',
                         < 0x80 => '+',

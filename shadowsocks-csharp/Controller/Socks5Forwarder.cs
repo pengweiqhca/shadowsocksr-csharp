@@ -608,11 +608,7 @@ namespace Shadowsocks.Controller
                 Server.GetForwardServerRef().GetConnections().DecRef(this);
             }
 
-            public override void Shutdown()
-            {
-                InvokeHandler handler = () => Close();
-                handler.BeginInvoke(null, null);
-            }
+            public override void Shutdown() => Task.Run(Close);
         }
     }
 }

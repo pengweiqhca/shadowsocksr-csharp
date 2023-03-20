@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
-using System.Windows.Forms;
-using Shadowsocks.Controller;
+﻿using Shadowsocks.Controller;
 using Shadowsocks.Model;
 using Shadowsocks.Properties;
 
@@ -27,7 +20,7 @@ namespace Shadowsocks.View
             this.controller = controller;
 
             UpdateTexts();
-            controller.ConfigChanged += controller_ConfigChanged;
+            controller.ConfigChanged += LoadCurrentConfiguration;
 
             var dpi_mul = Util.Utils.GetDpiMul();
 
@@ -63,7 +56,7 @@ namespace Shadowsocks.View
         }
         private void SettingsForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            controller.ConfigChanged -= controller_ConfigChanged;
+            controller.ConfigChanged -= LoadCurrentConfiguration;
         }
 
         private void UpdateTexts()
@@ -113,17 +106,6 @@ namespace Shadowsocks.View
 
             btnOK.Text = I18N.GetString("OK");
             btnCancel.Text = I18N.GetString("Cancel");
-        }
-
-        private void controller_ConfigChanged(object sender, EventArgs e)
-        {
-            LoadCurrentConfiguration();
-        }
-
-        private void ShowWindow()
-        {
-            Opacity = 1;
-            Show();
         }
 
         private int SaveOldSelectedServer()

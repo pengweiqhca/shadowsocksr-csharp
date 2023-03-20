@@ -36,16 +36,7 @@ namespace Shadowsocks.Controller
         {
             try
             {
-                var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-                var ipEndPoints = ipProperties.GetActiveTcpListeners();
-
-                foreach (var endPoint in ipEndPoints)
-                {
-                    if (endPoint.Port == port)
-                    {
-                        return true;
-                    }
-                }
+                return IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Any(endPoint => endPoint.Port == port);
             }
             catch
             {

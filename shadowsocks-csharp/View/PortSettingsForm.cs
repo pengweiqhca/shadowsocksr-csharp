@@ -15,7 +15,7 @@ namespace Shadowsocks.View
             InitializeComponent();
             Icon = Icon.FromHandle(Resources.ssw128.GetHicon());
             this.controller = controller;
-            controller.ConfigChanged += controller_ConfigChanged;
+            controller.ConfigChanged += LoadCurrentConfiguration;
 
             UpdateTexts();
 
@@ -49,14 +49,9 @@ namespace Shadowsocks.View
             Del.Text = I18N.GetString("&Delete");
         }
 
-        private void controller_ConfigChanged(object sender, EventArgs e)
-        {
-            LoadCurrentConfiguration();
-        }
-
         private void PortMapForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            controller.ConfigChanged -= controller_ConfigChanged;
+            controller.ConfigChanged -= LoadCurrentConfiguration;
         }
 
         private void LoadCurrentConfiguration()

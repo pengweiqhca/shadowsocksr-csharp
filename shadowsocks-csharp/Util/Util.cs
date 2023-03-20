@@ -12,8 +12,6 @@ namespace Shadowsocks.Util
 {
     public class Utils
     {
-        private delegate IPHostEntry GetHostEntryHandler(string ip);
-
         private static readonly LRUCache<string, IPAddress> dnsBuffer = new();
 
         public static LRUCache<string, IPAddress> DnsBuffer
@@ -297,125 +295,123 @@ namespace Shadowsocks.Util
 
         public static IPAddress QueryDns(string host, string dns_servers, bool IPv6_first = false)
         {
-            IPAddress ret_ipAddress = null;
-            ret_ipAddress = _QueryDns(host, dns_servers, IPv6_first);
+            var ret_ipAddress = _QueryDns(host, dns_servers, IPv6_first);
+
             Logging.Info($"DNS query {host} answer {ret_ipAddress}");
+
             return ret_ipAddress;
         }
 
-        public static IPAddress _QueryDns(string host, string dns_servers, bool IPv6_first = false)
+        private static IPAddress _QueryDns(string host, string dns_servers, bool IPv6_first = false)
         {
             IPAddress ret_ipAddress = null;
-            {
-                if (!string.IsNullOrEmpty(dns_servers))
-                {
-                    Types[] types;
-                    if (IPv6_first)
-                        types = new[] { Types.AAAA, Types.A };
-                    else
-                        types = new[] { Types.A, Types.AAAA };
-                    var _dns_server = dns_servers.Split(',');
-                    var dns_server = new List<IPEndPoint>();
-                    var local_dns_server = new List<IPEndPoint>();
-                    foreach (var server_str in _dns_server)
-                    {
-                        var server = server_str.Trim(' ');
-                        var index = server.IndexOf(':');
-                        string ip = null;
-                        string port = null;
-                        if (index >= 0)
-                        {
-                            if (server.StartsWith("["))
-                            {
-                                var ipv6_end = server.IndexOf(']', 1);
-                                if (ipv6_end >= 0)
-                                {
-                                    ip = server[1..ipv6_end];
 
-                                    index = server.IndexOf(':', ipv6_end);
-                                    if (index == ipv6_end + 1)
-                                    {
-                                        port = server[(index + 1)..];
-                                    }
-                                }
-                            }
-                            else
+            if (!string.IsNullOrEmpty(dns_servers))
+            {
+                var types = IPv6_first ? new[] { Types.AAAA, Types.A } : new[] { Types.A, Types.AAAA };
+
+                var _dns_server = dns_servers.Split(',');
+                var dns_server = new List<IPEndPoint>();
+
+                foreach (var server_str in _dns_server)
+                {
+                    var server = server_str.Trim(' ');
+                    var index = server.IndexOf(':');
+                    string ip = null;
+                    string port = null;
+                    if (index >= 0)
+                    {
+                        if (server.StartsWith("["))
+                        {
+                            var ipv6_end = server.IndexOf(']', 1);
+                            if (ipv6_end >= 0)
                             {
-                                ip = server[..index];
-                                port = server[(index + 1)..];
+                                ip = server[1..ipv6_end];
+
+                                index = server.IndexOf(':', ipv6_end);
+                                if (index == ipv6_end + 1)
+                                {
+                                    port = server[(index + 1)..];
+                                }
                             }
                         }
                         else
                         {
-                            index = server.IndexOf(' ');
-                            if (index >= 0)
-                            {
-                                ip = server[..index];
-                                port = server[(index + 1)..];
-                            }
-                            else
-                            {
-                                ip = server;
-                            }
-                        }
-                        if (ip != null && IPAddress.TryParse(ip, out var ipAddress))
-                        {
-                            var i_port = 53;
-                            if (port != null)
-                                int.TryParse(port, out i_port);
-                            dns_server.Add(new IPEndPoint(ipAddress, i_port));
-                            //dns_server.Add(port == null ? ip : ip + " " + port);
+                            ip = server[..index];
+                            port = server[(index + 1)..];
                         }
                     }
-                    for (var query_i = 0; query_i < types.Length; ++query_i)
+                    else
                     {
-                        var dns = new DnsQuery(host, types[query_i])
+                        index = server.IndexOf(' ');
+                        if (index >= 0)
                         {
-                            RecursionDesired = true
-                        };
-                        foreach (var server in dns_server)
-                        {
-                            dns.Servers.Add(server);
+                            ip = server[..index];
+                            port = server[(index + 1)..];
                         }
-                        if (dns.Send())
+                        else
                         {
-                            var count = dns.Response.Answers.Count;
-                            if (count > 0)
-                            {
-                                for (var i = 0; i < count; ++i)
-                                {
-                                    if (((ResourceRecord)dns.Response.Answers[i]).Type != types[query_i])
-                                        continue;
-                                    return ((Address)dns.Response.Answers[i]).IP;
-                                }
-                            }
+                            ip = server;
                         }
+                    }
+                    if (ip != null && IPAddress.TryParse(ip, out var ipAddress))
+                    {
+                        var i_port = 53;
+                        if (port != null)
+                            int.TryParse(port, out i_port);
+                        dns_server.Add(new IPEndPoint(ipAddress, i_port));
+                        //dns_server.Add(port == null ? ip : ip + " " + port);
                     }
                 }
+                foreach (var type in types)
                 {
-                    try
+                    var dns = new DnsQuery(host, type)
                     {
-                        var callback = new GetHostEntryHandler(Dns.GetHostEntry);
-                        var result = callback.BeginInvoke(host, null, null);
-                        if (result.AsyncWaitHandle.WaitOne(10000, true))
+                        RecursionDesired = true
+                    };
+                    foreach (var server in dns_server)
+                    {
+                        dns.Servers.Add(server);
+                    }
+                    if (dns.Send())
+                    {
+                        var count = dns.Response.Answers.Count;
+                        if (count > 0)
                         {
-                            var ipHostEntry = callback.EndInvoke(result);
-                            foreach (var ad in ipHostEntry.AddressList)
+                            for (var i = 0; i < count; ++i)
                             {
-                                if (ad.AddressFamily == AddressFamily.InterNetwork)
-                                    return ad;
-                            }
-                            foreach (var ad in ipHostEntry.AddressList)
-                            {
-                                return ad;
+                                if (((ResourceRecord)dns.Response.Answers[i]).Type != type)
+                                    continue;
+                                return ((Address)dns.Response.Answers[i]).IP;
                             }
                         }
                     }
-                    catch
-                    {
-
-                    }
                 }
+            }
+
+            try
+            {
+                using var cts = new CancellationTokenSource(10000);
+#if NETFRAMEWORK
+                var task = Dns.GetHostEntryAsync(host);
+                if (Task.WhenAny(task, Task.Delay(10000, cts.Token)).GetAwaiter().GetResult() != task) return ret_ipAddress;
+                var ipHostEntry = task.GetAwaiter().GetResult();
+#else
+                var ipHostEntry = Dns.GetHostEntryAsync(host, cts.Token).GetAwaiter().GetResult();
+#endif
+                foreach (var ad in ipHostEntry.AddressList)
+                {
+                    if (ad.AddressFamily == AddressFamily.InterNetwork)
+                        return ad;
+                }
+                foreach (var ad in ipHostEntry.AddressList)
+                {
+                    return ad;
+                }
+            }
+            catch
+            {
+
             }
             return ret_ipAddress;
         }

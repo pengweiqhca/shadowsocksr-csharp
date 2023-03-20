@@ -1,6 +1,4 @@
-﻿using Shadowsocks.Controller;
-using Shadowsocks.Properties;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace Shadowsocks.Encryption
 {
@@ -8,29 +6,7 @@ namespace Shadowsocks.Encryption
     {
         const string DLLNAME = "libsscrypto";
 
-        static Sodium()
-        {
-            var dllPath = Path.Combine(Path.Combine(Application.StartupPath, @"temp"), "libsscrypto.dll");
-            try
-            {
-                if (IntPtr.Size == 4)
-                {
-                    FileManager.UncompressFile(dllPath, Resources.libsscrypto_dll);
-                }
-                else
-                {
-                    FileManager.UncompressFile(dllPath, Resources.libsscrypto64_dll);
-                }
-                LoadLibrary(dllPath);
-            }
-            catch (IOException)
-            {
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-        }
+        static Sodium() => MbedTLS.MD5(Array.Empty<byte>());
 
         [DllImport("Kernel32.dll")]
         private static extern IntPtr LoadLibrary(string path);

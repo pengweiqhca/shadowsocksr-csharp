@@ -1,15 +1,8 @@
 ﻿using Shadowsocks.Model;
 using Shadowsocks.Properties;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
-using System.Text;
 using System.Net.NetworkInformation;
-using System.Net;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
+using System.Text;
 
 namespace Shadowsocks.Controller
 {
@@ -155,15 +148,9 @@ namespace Shadowsocks.Controller
             var defaultPort = 60000;
             try
             {
-                var properties = IPGlobalProperties.GetIPGlobalProperties();
-                var tcpEndPoints = properties.GetActiveTcpListeners();
                 var random = new Random(Util.Utils.GetExecutablePath().GetHashCode() ^ (int)DateTime.Now.Ticks);
 
-                var usedPorts = new List<int>();
-                foreach (var endPoint in IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners())
-                {
-                    usedPorts.Add(endPoint.Port);
-                }
+                var usedPorts = new HashSet<int>(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Select(endPoint => endPoint.Port));
 
                 for (var nTry = 0; nTry < 1000; nTry++)
                 {

@@ -43,13 +43,6 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public static string GetString(string key)
-        {
-            if (Strings.ContainsKey(key))
-            {
-                return Strings[key];
-            }
-            return key;
-        }
+        public static string GetString(string key) => Strings.ContainsKey(key) ? Strings[key] : key;
     }
 }

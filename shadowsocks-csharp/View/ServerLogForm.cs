@@ -88,7 +88,7 @@ namespace Shadowsocks.View
                     CreateMenuItem("Auto &size", autosizeItem_Click),
                     topmostItem = CreateMenuItem("Always On &Top", topmostItem_Click)),
             });
-            controller.ConfigChanged += controller_ConfigChanged;
+            controller.ConfigChanged += UpdateTitle;
 
             for (var i = 0; i < ServerDataGrid.Columns.Count; ++i)
             {
@@ -122,11 +122,6 @@ namespace Shadowsocks.View
             {
                 ServerDataGrid.Columns[i].HeaderText = I18N.GetString(ServerDataGrid.Columns[i].HeaderText);
             }
-        }
-
-        private void controller_ConfigChanged(object sender, EventArgs e)
-        {
-            UpdateTitle();
         }
 
         private string FormatBytes(long bytes)
@@ -935,7 +930,7 @@ namespace Shadowsocks.View
 
         private void ServerLogForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            controller.ConfigChanged -= controller_ConfigChanged;
+            controller.ConfigChanged -= UpdateTitle;
             var thread = workerThread;
             workerThread = null;
             while (thread.IsAlive)

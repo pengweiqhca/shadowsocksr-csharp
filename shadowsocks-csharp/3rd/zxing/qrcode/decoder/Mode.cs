@@ -120,7 +120,7 @@ namespace ZXing.QrCode.Internal
                 throw new ArgumentException("Character count doesn't apply to this mode");
             }
             var number = version.VersionNumber;
-            int offset = number switch
+            var offset = number switch
             {
                 <= 9 => 0,
                 <= 26 => 1,

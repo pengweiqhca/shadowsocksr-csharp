@@ -88,8 +88,7 @@ namespace Shadowsocks.Controller
             {
                 return false;
             }
-            InvokeHandler handler = () => new ProxyAuthHandler(_config, _transfer, _IPRange, firstPacket, length, socket);
-            handler.BeginInvoke(null, null);
+            Task.Run(() => new ProxyAuthHandler(_config, _transfer, _IPRange, firstPacket, length, socket));
             return true;
         }
     }
@@ -517,8 +516,7 @@ namespace Shadowsocks.Controller
 
                 if (cfg.reconnectTimes > 0)
                 {
-                    InvokeHandler handler = () => Connect();
-                    handler.BeginInvoke(null, null);
+                    Task.Run(Connect);
                 }
                 else
                 {
@@ -703,11 +701,7 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public override void Shutdown()
-        {
-            InvokeHandler handler = () => Close();
-            handler.BeginInvoke(null, null);
-        }
+        public override void Shutdown() => Task.Run(Close);
 
         public void Close()
         {

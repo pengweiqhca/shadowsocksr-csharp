@@ -1,10 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Runtime.InteropServices;
-
-using Shadowsocks.Controller;
+﻿using Shadowsocks.Controller;
 using Shadowsocks.Properties;
-using Shadowsocks.Util;
+using System.Runtime.InteropServices;
 
 namespace Shadowsocks.Encryption
 {
@@ -52,7 +48,7 @@ namespace Shadowsocks.Encryption
             public byte[] ComputeHash(byte[] buffer, int offset, int count)
             {
                 var output = new byte[64];
-                ss_hmac_ex(MBEDTLS_MD_SHA1, key, key.Length, buffer,offset, count, output);
+                ss_hmac_ex(MBEDTLS_MD_SHA1, key, key.Length, buffer, offset, count, output);
                 return output;
             }
         }
@@ -68,14 +64,7 @@ namespace Shadowsocks.Encryption
             var dllPath = Path.Combine(runningPath, "libsscrypto.dll");
             try
             {
-                if (IntPtr.Size == 4)
-                {
-                    FileManager.UncompressFile(dllPath, Resources.libsscrypto_dll);
-                }
-                else
-                {
-                    FileManager.UncompressFile(dllPath, Resources.libsscrypto64_dll);
-                }
+                FileManager.UncompressFile(dllPath, IntPtr.Size == 4 ? Resources.libsscrypto_dll : Resources.libsscrypto64_dll);
             }
             catch (IOException)
             {
@@ -84,7 +73,7 @@ namespace Shadowsocks.Encryption
             {
                 Logging.LogUsefulException(e);
             }
-            var module = LoadLibrary(dllPath);
+            LoadLibrary(dllPath);
         }
 
         public static byte[] MD5(byte[] input)

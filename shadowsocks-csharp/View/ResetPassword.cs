@@ -42,7 +42,7 @@ namespace Shadowsocks.View
                 }
                 else
                 {
-                    buttonOK_Click(this, EventArgs.Empty);
+                    buttonOK_Click(sender, e);
                 }
             }
         }

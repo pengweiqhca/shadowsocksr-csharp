@@ -31,27 +31,20 @@ namespace Shadowsocks.Controller
         private bool stopped;
         private readonly bool firstRun = true;
 
-
-        public class PathEventArgs : EventArgs
-        {
-            public string Path;
-        }
-
-        public event EventHandler ConfigChanged;
-        public event EventHandler ToggleModeChanged;
-        public event EventHandler ToggleRuleModeChanged;
-        //public event EventHandler ShareOverLANStatusChanged;
-        public event EventHandler ShowConfigFormEvent;
+        public Action ConfigChanged;
+        public Action ToggleModeChanged;
+        public Action ToggleRuleModeChanged;
+        public Action<int> ShowConfigFormEvent;
 
         // when user clicked Edit PAC, and PAC file has already created
-        public event EventHandler<PathEventArgs> PACFileReadyToOpen;
-        public event EventHandler<PathEventArgs> UserRuleFileReadyToOpen;
+        public Action<string> PACFileReadyToOpen;
+        public Action<string> UserRuleFileReadyToOpen;
 
-        public event EventHandler<GFWListUpdater.ResultEventArgs> UpdatePACFromGFWListCompleted;
+        public Action<GFWListUpdater, bool> UpdatePACFromGFWListCompleted;
 
-        public event ErrorEventHandler UpdatePACFromGFWListError;
+        public Action<Exception> UpdatePACFromGFWListError;
 
-        public event ErrorEventHandler Errored;
+        public Action<Exception> Errored;
 
         public ShadowsocksController()
         {
@@ -75,7 +68,7 @@ namespace Shadowsocks.Controller
 
         protected void ReportError(Exception e)
         {
-            Errored?.Invoke(this, new ErrorEventArgs(e));
+            Errored?.Invoke(e);
         }
 
         public void ReloadIPRange()
@@ -93,7 +86,7 @@ namespace Shadowsocks.Controller
 
         public Configuration GetCurrentConfiguration() => _config;
 
-        private int FindFirstMatchServer(Server server, List<Server> servers)
+        private int FindFirstMatchServer(Server server, IReadOnlyList<Server> servers)
         {
             for (var i = 0; i < servers.Count; ++i)
             {
@@ -225,14 +218,14 @@ namespace Shadowsocks.Controller
         {
             _config.sysProxyMode = (int)mode;
             SaveConfig(_config);
-            ToggleModeChanged?.Invoke(this, EventArgs.Empty);
+            ToggleModeChanged?.Invoke();
         }
 
         public void ToggleRuleMode(int mode)
         {
             _config.proxyRuleMode = mode;
             SaveConfig(_config);
-            ToggleRuleModeChanged?.Invoke(this, EventArgs.Empty);
+            ToggleRuleModeChanged?.Invoke();
         }
 
         public void ToggleSelectRandom(bool enabled)
@@ -297,14 +290,12 @@ namespace Shadowsocks.Controller
 
         public void TouchPACFile()
         {
-            var pacFilename = _pacServer.TouchPACFile();
-            PACFileReadyToOpen?.Invoke(this, new PathEventArgs() { Path = pacFilename });
+            PACFileReadyToOpen?.Invoke(_pacServer.TouchPACFile());
         }
 
         public void TouchUserRuleFile()
         {
-            var userRuleFilename = _pacServer.TouchUserRuleFile();
-            UserRuleFileReadyToOpen?.Invoke(this, new PathEventArgs() { Path = userRuleFilename });
+            UserRuleFileReadyToOpen?.Invoke(_pacServer.TouchUserRuleFile());
         }
 
         public void UpdatePACFromGFWList()
@@ -315,10 +306,8 @@ namespace Shadowsocks.Controller
             }
         }
 
-        public void UpdatePACFromOnlinePac(string url)
-        {
-            gfwListUpdater?.UpdatePACFromGFWList(_config, url);
-        }
+        public Task UpdatePACFromOnlinePac(string url) =>
+            gfwListUpdater == null ? Task.CompletedTask : gfwListUpdater.UpdatePACFromGFWList(_config, url);
 
         protected void Reload()
         {
@@ -345,7 +334,7 @@ namespace Shadowsocks.Controller
             if (_pacServer == null)
             {
                 _pacServer = new PACServer();
-                _pacServer.PACFileChanged += pacServer_PACFileChanged;
+                _pacServer.PACFileChanged += UpdateSystemProxy;
             }
             _pacServer.UpdateConfiguration(_config);
             if (gfwListUpdater == null)
@@ -421,12 +410,6 @@ namespace Shadowsocks.Controller
                         ReportError(e);
                         break;
                     }
-                    Thread.Sleep(1000 * i * i);
-                    if (_listener != null)
-                    {
-                        _listener.Stop();
-                        _listener = null;
-                    }
                 }
             }
 
@@ -457,12 +440,11 @@ namespace Shadowsocks.Controller
                 }
             }
 
-            ConfigChanged?.Invoke(this, EventArgs.Empty);
+            ConfigChanged?.Invoke();
 
             UpdateSystemProxy();
             Util.Utils.ReleaseMemory();
         }
-
 
         protected void SaveConfig(Configuration newConfig)
         {
@@ -481,24 +463,19 @@ namespace Shadowsocks.Controller
 #endif
         }
 
-        private void pacServer_PACFileChanged(object sender, EventArgs e)
+        private void pacServer_PACUpdateCompleted(bool result)
         {
-            UpdateSystemProxy();
+            UpdatePACFromGFWListCompleted?.Invoke(gfwListUpdater, result);
         }
 
-        private void pacServer_PACUpdateCompleted(object sender, GFWListUpdater.ResultEventArgs e)
+        private void pacServer_PACUpdateError(Exception ex)
         {
-            UpdatePACFromGFWListCompleted?.Invoke(sender, e);
-        }
-
-        private void pacServer_PACUpdateError(object sender, ErrorEventArgs e)
-        {
-            UpdatePACFromGFWListError?.Invoke(sender, e);
+            UpdatePACFromGFWListError?.Invoke(ex);
         }
 
         public void ShowConfigForm(int index)
         {
-            ShowConfigFormEvent?.Invoke(index, EventArgs.Empty);
+            ShowConfigFormEvent?.Invoke(index);
         }
 
         /// <summary>
