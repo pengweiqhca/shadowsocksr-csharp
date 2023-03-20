@@ -40,7 +40,6 @@ namespace Shadowsocks.View
         private ToolStripMenuItem enableItem;
         private ToolStripMenuItem PACModeItem;
         private ToolStripMenuItem globalModeItem;
-        private ToolStripMenuItem modeItem;
 
         private ToolStripMenuItem ruleBypassLan;
         private ToolStripMenuItem ruleBypassChina;
@@ -48,7 +47,7 @@ namespace Shadowsocks.View
         private ToolStripMenuItem ruleUser;
         private ToolStripMenuItem ruleDisableBypass;
 
-        private ToolStripMenuItem SeperatorItem;
+        private ToolStripItem SeperatorItem;
         private ToolStripMenuItem ServersItem;
         private ToolStripMenuItem SelectRandomItem;
         private ToolStripMenuItem sameHostForSameTargetItem;
@@ -213,48 +212,48 @@ namespace Shadowsocks.View
 
         private ToolStripMenuItem CreateMenuItem(string text, EventHandler click) => new(I18N.GetString(text), null, click);
 
-        private ToolStripMenuItem CreateMenuGroup(string text, ToolStripMenuItem[] items) => new(I18N.GetString(text), null, items);
+        private ToolStripMenuItem CreateMenuGroup(string text, ToolStripItem[] items) => new(I18N.GetString(text), null, items);
 
         private void LoadMenu()
         {
             contextMenu1 = new ContextMenuStrip();
-            contextMenu1.Items.AddRange(new[] {
-                modeItem = CreateMenuGroup("Mode", new[] {
+            contextMenu1.Items.AddRange(new ToolStripItem[] {
+                CreateMenuGroup("Mode", new ToolStripItem[] {
                     enableItem = CreateMenuItem("Disable system proxy", EnableItem_Click),
                     PACModeItem = CreateMenuItem("PAC", PACModeItem_Click),
                     globalModeItem = CreateMenuItem("Global", GlobalModeItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     noModifyItem = CreateMenuItem("No modify system proxy", NoModifyItem_Click)
                 }),
-                CreateMenuGroup("PAC ", new[] {
+                CreateMenuGroup("PAC ", new ToolStripItem[] {
                     CreateMenuItem("Update local PAC from Lan IP list", UpdatePACFromLanIPListItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Update local PAC from Chn White list", UpdatePACFromCNWhiteListItem_Click),
                     CreateMenuItem("Update local PAC from Chn IP list", UpdatePACFromCNIPListItem_Click),
                     CreateMenuItem("Update local PAC from GFWList", UpdatePACFromGFWListItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Update local PAC from Chn Only list", UpdatePACFromCNOnlyListItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Copy PAC URL", CopyPACURLItem_Click),
                     CreateMenuItem("Edit local PAC file...", EditPACFileItem_Click),
                     CreateMenuItem("Edit user rule for GFWList...", EditUserRuleFileForGFWListItem_Click),
                 }),
-                CreateMenuGroup("Proxy rule", new[] {
+                CreateMenuGroup("Proxy rule", new ToolStripItem[] {
                     ruleBypassLan = CreateMenuItem("Bypass LAN", RuleBypassLanItem_Click),
                     ruleBypassChina = CreateMenuItem("Bypass LAN && China", RuleBypassChinaItem_Click),
                     ruleBypassNotChina = CreateMenuItem("Bypass LAN && not China", RuleBypassNotChinaItem_Click),
                     ruleUser = CreateMenuItem("User custom", RuleUserItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     ruleDisableBypass = CreateMenuItem("Disable bypass", RuleBypassDisableItem_Click),
                 }),
-                new("-"),
-                ServersItem = CreateMenuGroup("Servers", new[] {
-                    SeperatorItem = new ToolStripMenuItem("-"),
+                new ToolStripSeparator(),
+                ServersItem = CreateMenuGroup("Servers", new ToolStripItem[] {
+                    SeperatorItem = new ToolStripSeparator(),
                     CreateMenuItem("Edit servers...", Config_Click),
                     CreateMenuItem("Import servers from file...", Import_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     sameHostForSameTargetItem = CreateMenuItem("Same host for same address", SelectSameHostForSameTargetItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Server statistic...", ShowServerLogItem_Click),
                     CreateMenuItem("Disconnect current", DisconnectCurrent_Click),
                 }),
@@ -267,19 +266,19 @@ namespace Shadowsocks.View
                 CreateMenuItem("Global settings...", Setting_Click),
                 CreateMenuItem("Port settings...", ShowPortMapItem_Click),
                 UpdateItem = CreateMenuItem("Update available", UpdateItem_Clicked),
-                new("-"),
+                new ToolStripSeparator(),
                 CreateMenuItem("Scan QRCode from screen...", ScanQRCodeItem_Click),
                 CreateMenuItem("Import SSR links from clipboard...", CopyAddress_Click),
-                new("-"),
-                CreateMenuGroup("Help", new[] {
+                new ToolStripSeparator(),
+                CreateMenuGroup("Help", new ToolStripItem[] {
                     CreateMenuItem("Check update", CheckUpdate_Click),
                     CreateMenuItem("Show logs...", ShowLogItem_Click),
                     CreateMenuItem("Open wiki...", OpenWiki_Click),
                     CreateMenuItem("Feedback...", FeedbackItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Gen custom QRCode...", showURLFromQRCode),
                     CreateMenuItem("Reset password...", ResetPasswordItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("About...", AboutItem_Click),
                     CreateMenuItem("Donate...", DonateItem_Click),
                 }),

@@ -75,13 +75,13 @@ namespace Shadowsocks.View
 
             MainMenuStrip = new MenuStrip();
             MainMenuStrip.Items.AddRange(new[] {
-                CreateMenuGroup("&Control", new[] {
+                CreateMenuGroup("&Control", new ToolStripItem[] {
                     CreateMenuItem("&Disconnect direct connections", DisconnectForward_Click),
                     CreateMenuItem("Disconnect &All", Disconnect_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Clear &MaxSpeed", ClearMaxSpeed_Click),
                     clearItem = CreateMenuItem("&Clear", ClearItem_Click),
-                    new("-"),
+                    new ToolStripSeparator(),
                     CreateMenuItem("Clear &Selected Total", ClearSelectedTotal_Click),
                     CreateMenuItem("Clear &Total", ClearTotal_Click),
                 }),
@@ -115,7 +115,7 @@ namespace Shadowsocks.View
             Width = width + SystemInformation.VerticalScrollBarWidth + (Width - ClientSize.Width) + 1;
             ServerDataGrid.AutoResizeColumnHeadersHeight();
         }
-        private ToolStripMenuItem CreateMenuGroup(string text, ToolStripMenuItem[] items) => new(I18N.GetString(text), null, items);
+        private ToolStripMenuItem CreateMenuGroup(string text, ToolStripItem[] items) => new(I18N.GetString(text), null, items);
 
         private ToolStripMenuItem CreateMenuItem(string text, EventHandler click) => new(I18N.GetString(text), null, click);
 
