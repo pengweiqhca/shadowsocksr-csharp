@@ -2,125 +2,124 @@
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-namespace Shadowsocks.Controller
+namespace Shadowsocks.Controller;
+
+internal class AutoStartup
 {
-    class AutoStartup
+    private static readonly string Key = $"ShadowsocksR_{Application.StartupPath.GetHashCode()}";
+    private static readonly string RegistryRunPath = IntPtr.Size == 4 ? @"Software\Microsoft\Windows\CurrentVersion\Run" : @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run";
+
+    public static bool Set(bool enabled)
     {
-        static readonly string Key = $"ShadowsocksR_{Application.StartupPath.GetHashCode()}";
-        static readonly string RegistryRunPath = IntPtr.Size == 4 ? @"Software\Microsoft\Windows\CurrentVersion\Run" : @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run";
-
-        public static bool Set(bool enabled)
+        RegistryKey runKey = null;
+        try
         {
-            RegistryKey runKey = null;
-            try
+            var path = Util.Utils.GetExecutablePath();
+            runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
+            if (enabled)
             {
-                var path = Util.Utils.GetExecutablePath();
-                runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
-                if (enabled)
-                {
-                    runKey.SetValue(Key, path);
-                }
-                else
-                {
-                    runKey.DeleteValue(Key);
-                }
-                runKey.Close();
-                return true;
+                runKey.SetValue(Key, path);
             }
-            catch //(Exception e)
+            else
             {
-                //Logging.LogUsefulException(e);
-                return Util.Utils.RunAsAdmin("--setautorun") == 0;
+                runKey.DeleteValue(Key);
             }
-            finally
+            runKey.Close();
+            return true;
+        }
+        catch //(Exception e)
+        {
+            //Logging.LogUsefulException(e);
+            return Util.Utils.RunAsAdmin("--setautorun") == 0;
+        }
+        finally
+        {
+            if (runKey != null)
             {
-                if (runKey != null)
+                try
                 {
-                    try
-                    {
-                        runKey.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.LogUsefulException(e);
-                    }
+                    runKey.Close();
+                }
+                catch (Exception e)
+                {
+                    Logging.LogUsefulException(e);
                 }
             }
         }
+    }
 
-        public static bool Switch()
+    public static bool Switch()
+    {
+        var enabled = !Check();
+        RegistryKey runKey = null;
+        try
         {
-            var enabled = !Check();
-            RegistryKey runKey = null;
-            try
+            var path = Util.Utils.GetExecutablePath();
+            runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
+            if (enabled)
             {
-                var path = Util.Utils.GetExecutablePath();
-                runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, true);
-                if (enabled)
-                {
-                    runKey.SetValue(Key, path);
-                }
-                else
-                {
-                    runKey.DeleteValue(Key);
-                }
-                runKey.Close();
-                return true;
+                runKey.SetValue(Key, path);
             }
-            catch (Exception e)
+            else
             {
-                Logging.LogUsefulException(e);
-                return false;
+                runKey.DeleteValue(Key);
             }
-            finally
+            runKey.Close();
+            return true;
+        }
+        catch (Exception e)
+        {
+            Logging.LogUsefulException(e);
+            return false;
+        }
+        finally
+        {
+            if (runKey != null)
             {
-                if (runKey != null)
+                try
                 {
-                    try
-                    {
-                        runKey.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.LogUsefulException(e);
-                    }
+                    runKey.Close();
+                }
+                catch (Exception e)
+                {
+                    Logging.LogUsefulException(e);
                 }
             }
         }
+    }
 
-        public static bool Check()
+    public static bool Check()
+    {
+        RegistryKey runKey = null;
+        try
         {
-            RegistryKey runKey = null;
-            try
+            var path = Util.Utils.GetExecutablePath();
+            runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, false);
+            var runList = runKey.GetValueNames();
+            runKey.Close();
+            foreach (var item in runList)
             {
-                var path = Util.Utils.GetExecutablePath();
-                runKey = Registry.LocalMachine.OpenSubKey(RegistryRunPath, false);
-                var runList = runKey.GetValueNames();
-                runKey.Close();
-                foreach (var item in runList)
+                if (item.Equals(Key))
+                    return true;
+            }
+            return false;
+        }
+        catch (Exception e)
+        {
+            Logging.LogUsefulException(e);
+            return false;
+        }
+        finally
+        {
+            if (runKey != null)
+            {
+                try
                 {
-                    if (item.Equals(Key))
-                        return true;
+                    runKey.Close();
                 }
-                return false;
-            }
-            catch (Exception e)
-            {
-                Logging.LogUsefulException(e);
-                return false;
-            }
-            finally
-            {
-                if (runKey != null)
+                catch (Exception e)
                 {
-                    try
-                    {
-                        runKey.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        Logging.LogUsefulException(e);
-                    }
+                    Logging.LogUsefulException(e);
                 }
             }
         }

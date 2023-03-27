@@ -1584,8 +1584,9 @@ namespace SimpleJson
             private readonly MemberMapLoader _memberMapLoader;
             private readonly SafeDictionary<Type, SafeDictionary<string, MemberMap>> _memberMapsCache = new();
 
-            delegate object CtorDelegate();
-            static readonly SafeDictionary<Type, CtorDelegate> ConstructorCache = new();
+            private delegate object CtorDelegate();
+
+            private static readonly SafeDictionary<Type, CtorDelegate> ConstructorCache = new();
 
             public CacheResolver(MemberMapLoader memberMapLoader) => _memberMapLoader = memberMapLoader;
 
@@ -1658,7 +1659,7 @@ namespace SimpleJson
             }
 #endif
 
-            static GetHandler CreateGetHandler(FieldInfo fieldInfo)
+            private static GetHandler CreateGetHandler(FieldInfo fieldInfo)
             {
 #if SIMPLE_JSON_REFLECTIONEMIT
                 Type type = fieldInfo.FieldType;
@@ -1677,7 +1678,7 @@ namespace SimpleJson
 #endif
             }
 
-            static SetHandler CreateSetHandler(FieldInfo fieldInfo)
+            private static SetHandler CreateSetHandler(FieldInfo fieldInfo)
             {
                 if (fieldInfo.IsInitOnly || fieldInfo.IsLiteral)
                     return null;
@@ -1699,7 +1700,7 @@ namespace SimpleJson
 #endif
             }
 
-            static GetHandler CreateGetHandler(PropertyInfo propertyInfo)
+            private static GetHandler CreateGetHandler(PropertyInfo propertyInfo)
             {
 #if NETFX_CORE
                 MethodInfo getMethodInfo = propertyInfo.GetMethod;
@@ -1729,7 +1730,7 @@ namespace SimpleJson
 #endif
             }
 
-            static SetHandler CreateSetHandler(PropertyInfo propertyInfo)
+            private static SetHandler CreateSetHandler(PropertyInfo propertyInfo)
             {
 #if NETFX_CORE
                 MethodInfo setMethodInfo = propertyInfo.SetMethod;

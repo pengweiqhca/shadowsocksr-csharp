@@ -16,30 +16,29 @@
 
 using System;
 
-namespace ZXing.Common.Detector
+namespace ZXing.Common.Detector;
+
+public static class MathUtils
 {
-   public static class MathUtils
+   /// <summary>
+   /// Ends up being a bit faster than {@link Math#round(float)}. This merely rounds its
+   /// argument to the nearest int, where x.5 rounds up to x+1.
+   /// </summary>
+   /// <param name="d">The d.</param>
+   /// <returns></returns>
+   public static int round(float d) => (int)(d + 0.5f);
+
+   public static float distance(float aX, float aY, float bX, float bY)
    {
-      /// <summary>
-      /// Ends up being a bit faster than {@link Math#round(float)}. This merely rounds its
-      /// argument to the nearest int, where x.5 rounds up to x+1.
-      /// </summary>
-      /// <param name="d">The d.</param>
-      /// <returns></returns>
-      public static int round(float d) => (int)(d + 0.5f);
+      var xDiff = aX - bX;
+      var yDiff = aY - bY;
+      return (float)Math.Sqrt(xDiff * xDiff + yDiff * yDiff);
+   }
 
-      public static float distance(float aX, float aY, float bX, float bY)
-      {
-         var xDiff = aX - bX;
-         var yDiff = aY - bY;
-         return (float)Math.Sqrt(xDiff * xDiff + yDiff * yDiff);
-      }
-
-      public static float distance(int aX, int aY, int bX, int bY)
-      {
-         var xDiff = aX - bX;
-         var yDiff = aY - bY;
-         return (float)Math.Sqrt(xDiff * xDiff + yDiff * yDiff);
-      }
+   public static float distance(int aX, int aY, int bX, int bY)
+   {
+      var xDiff = aX - bX;
+      var yDiff = aY - bY;
+      return (float)Math.Sqrt(xDiff * xDiff + yDiff * yDiff);
    }
 }

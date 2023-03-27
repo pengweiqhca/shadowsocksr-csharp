@@ -11,25 +11,24 @@
 
 using System.Net;
 
-namespace OpenDNS
+namespace OpenDNS;
+
+/// <summary>
+/// Address Resource Record
+/// </summary>
+public class Address : ResourceRecord
 {
-    /// <summary>
-    /// Address Resource Record
-    /// </summary>
-    public class Address : ResourceRecord
+    public string ResourceAddress;
+    private IPAddress _IP;
+
+    public IPAddress IP
     {
-        public string ResourceAddress;
-        private IPAddress _IP;
+        get => _IP ??= IPAddress.Parse(ResourceAddress);
+    }
 
-        public IPAddress IP
-        {
-            get => _IP ??= IPAddress.Parse(ResourceAddress);
-        }
-
-        public Address(string _Name, Types _Type, Classes _Class, int _TimeToLive, string _ResourceAddress) : base(_Name, _Type, _Class, _TimeToLive)
-        {
-            ResourceAddress = _ResourceAddress;
-            RText = _ResourceAddress;
-        }
+    public Address(string _Name, Types _Type, Classes _Class, int _TimeToLive, string _ResourceAddress) : base(_Name, _Type, _Class, _TimeToLive)
+    {
+        ResourceAddress = _ResourceAddress;
+        RText = _ResourceAddress;
     }
 }

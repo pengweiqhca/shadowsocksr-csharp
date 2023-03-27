@@ -1,167 +1,167 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Shadowsocks.Encryption
+namespace Shadowsocks.Encryption;
+
+internal class Libcrypto
 {
-    class Libcrypto
+    private delegate IntPtr EncryptFunc();
+
+    private const string DLLNAME = "libeay32";
+    private static readonly Dictionary<string, EncryptFunc> encrypt_func_map;
+
+    static Libcrypto()
     {
-        delegate IntPtr EncryptFunc();
-        const string DLLNAME = "libeay32";
-        static readonly Dictionary<string, EncryptFunc> encrypt_func_map;
-
-        static Libcrypto()
+        try
         {
+            //try
+            //{
+            //    dlopen("libcrypto.so", 2);
+            //    return;
+            //}
+            //catch (Exception e)
+            //{
+            //    //Console.WriteLine(e.ToString());
+            //}
+            var runningPath = Path.Combine(Application.StartupPath, @"temp"); // Path.GetTempPath();
+            if (!Directory.Exists(runningPath))
+            {
+                Directory.CreateDirectory(runningPath);
+            }
+            var dllPath = Path.Combine(runningPath, "libeay32.dll");
             try
             {
-                //try
-                //{
-                //    dlopen("libcrypto.so", 2);
-                //    return;
-                //}
-                //catch (Exception e)
-                //{
-                //    //Console.WriteLine(e.ToString());
-                //}
-                var runningPath = Path.Combine(Application.StartupPath, @"temp"); // Path.GetTempPath();
-                if (!Directory.Exists(runningPath))
-                {
-                    Directory.CreateDirectory(runningPath);
-                }
-                var dllPath = Path.Combine(runningPath, "libeay32.dll");
-                try
-                {
-                    //FileManager.UncompressFile(dllPath, Resources.libsscrypto_dll);
-                    LoadLibrary(dllPath);
-                }
-                catch (IOException)
-                {
-                }
-                catch //(Exception e)
-                {
-                    //Console.WriteLine(e.ToString());
-                }
+                //FileManager.UncompressFile(dllPath, Resources.libsscrypto_dll);
+                LoadLibrary(dllPath);
             }
-            finally
+            catch (IOException)
             {
-                if (encrypt_func_map == null && isSupport())
-                {
-                    var func_map = new Dictionary<string, EncryptFunc>
-                    {
-                        ["rc4"] = EVP_rc4,
-                        ["aes-128-cfb"] = EVP_aes_128_cfb
-                    };
-                    encrypt_func_map = func_map;
-                    OpenSSL_add_all_ciphers();
-                }
+            }
+            catch //(Exception e)
+            {
+                //Console.WriteLine(e.ToString());
             }
         }
-
-        public static bool isSupport()
+        finally
         {
-            try
+            if (encrypt_func_map == null && isSupport())
             {
-                var cipher = EVP_get_cipherbyname(null);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public static bool is_cipher(string cipher_name)
-        {
-            var real_cipher_name = cipher_name;
-            if (cipher_name.StartsWith("rc4-md5"))
-            {
-                real_cipher_name = "rc4";
-            }
-            var ctx = IntPtr.Zero;
-            var cipher_name_buf = Encoding.ASCII.GetBytes(real_cipher_name);
-            Array.Resize(ref cipher_name_buf, cipher_name_buf.Length + 1);
-            var cipher = EVP_get_cipherbyname(cipher_name_buf);
-            return cipher != IntPtr.Zero;
-        }
-
-        public static IntPtr init(string cipher_name, byte[] key, byte[] iv, int op)
-        {
-            var ctx = IntPtr.Zero;
-            var real_cipher_name = cipher_name;
-            if (cipher_name.StartsWith("rc4-md5"))
-            {
-                real_cipher_name = "rc4";
-            }
-            var cipher_name_buf = Encoding.ASCII.GetBytes(real_cipher_name);
-            Array.Resize(ref cipher_name_buf, cipher_name_buf.Length + 1);
-            var cipher = EVP_get_cipherbyname(cipher_name_buf);
-            if (cipher == IntPtr.Zero)
-            {
-                if (encrypt_func_map != null && encrypt_func_map.TryGetValue(real_cipher_name, out var value))
+                var func_map = new Dictionary<string, EncryptFunc>
                 {
-                    cipher = value();
-                }
+                    ["rc4"] = EVP_rc4,
+                    ["aes-128-cfb"] = EVP_aes_128_cfb
+                };
+                encrypt_func_map = func_map;
+                OpenSSL_add_all_ciphers();
             }
-            if (cipher != IntPtr.Zero)
-            {
-                ctx = EVP_CIPHER_CTX_new();
-                var r = EVP_CipherInit_ex(ctx, cipher, IntPtr.Zero, key, iv, op);
-                if (r == 0)
-                {
-                    clean(ctx);
-                    return IntPtr.Zero;
-                }
-            }
-            return ctx;
         }
-
-        public static int update(IntPtr ctx, byte[] data, int length, byte[] outbuf)
-        {
-            var out_len = 0;
-            EVP_CipherUpdate(ctx, outbuf, ref out_len, data, length);
-            return out_len;
-        }
-
-        public static void clean(IntPtr ctx)
-        {
-            EVP_CIPHER_CTX_cleanup(ctx);
-            EVP_CIPHER_CTX_free(ctx);
-        }
-
-        [DllImport("Kernel32.dll")]
-        private static extern IntPtr LoadLibrary(string path);
-
-        //[DllImport("libdl.so")]
-        //private static extern IntPtr dlopen(String fileName, int flags);
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void OpenSSL_add_all_ciphers();
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr EVP_add_cipher(byte[] cipher_name);
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr EVP_get_cipherbyname(byte[] cipher_name);
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr EVP_aes_128_cfb();
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr EVP_rc4();
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr EVP_CIPHER_CTX_new();
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void EVP_CIPHER_CTX_cleanup(IntPtr ctx);
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void EVP_CIPHER_CTX_free(IntPtr ctx);
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int EVP_CipherInit_ex(IntPtr ctx, IntPtr cipher, IntPtr _, byte[] key, byte[] iv, int op);
-
-        [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void EVP_CipherUpdate(IntPtr ctx, byte[] output, ref int output_size, byte[] data, int len);
-
     }
+
+    public static bool isSupport()
+    {
+        try
+        {
+            var cipher = EVP_get_cipherbyname(null);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool is_cipher(string cipher_name)
+    {
+        var real_cipher_name = cipher_name;
+        if (cipher_name.StartsWith("rc4-md5"))
+        {
+            real_cipher_name = "rc4";
+        }
+        var ctx = IntPtr.Zero;
+        var cipher_name_buf = Encoding.ASCII.GetBytes(real_cipher_name);
+        Array.Resize(ref cipher_name_buf, cipher_name_buf.Length + 1);
+        var cipher = EVP_get_cipherbyname(cipher_name_buf);
+        return cipher != IntPtr.Zero;
+    }
+
+    public static IntPtr init(string cipher_name, byte[] key, byte[] iv, int op)
+    {
+        var ctx = IntPtr.Zero;
+        var real_cipher_name = cipher_name;
+        if (cipher_name.StartsWith("rc4-md5"))
+        {
+            real_cipher_name = "rc4";
+        }
+        var cipher_name_buf = Encoding.ASCII.GetBytes(real_cipher_name);
+        Array.Resize(ref cipher_name_buf, cipher_name_buf.Length + 1);
+        var cipher = EVP_get_cipherbyname(cipher_name_buf);
+        if (cipher == IntPtr.Zero)
+        {
+            if (encrypt_func_map != null && encrypt_func_map.TryGetValue(real_cipher_name, out var value))
+            {
+                cipher = value();
+            }
+        }
+        if (cipher != IntPtr.Zero)
+        {
+            ctx = EVP_CIPHER_CTX_new();
+            var r = EVP_CipherInit_ex(ctx, cipher, IntPtr.Zero, key, iv, op);
+            if (r == 0)
+            {
+                clean(ctx);
+                return IntPtr.Zero;
+            }
+        }
+        return ctx;
+    }
+
+    public static int update(IntPtr ctx, byte[] data, int length, byte[] outbuf)
+    {
+        var out_len = 0;
+        EVP_CipherUpdate(ctx, outbuf, ref out_len, data, length);
+        return out_len;
+    }
+
+    public static void clean(IntPtr ctx)
+    {
+        EVP_CIPHER_CTX_cleanup(ctx);
+        EVP_CIPHER_CTX_free(ctx);
+    }
+
+    [DllImport("Kernel32.dll")]
+    private static extern IntPtr LoadLibrary(string path);
+
+    //[DllImport("libdl.so")]
+    //private static extern IntPtr dlopen(String fileName, int flags);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void OpenSSL_add_all_ciphers();
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr EVP_add_cipher(byte[] cipher_name);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr EVP_get_cipherbyname(byte[] cipher_name);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr EVP_aes_128_cfb();
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr EVP_rc4();
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr EVP_CIPHER_CTX_new();
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void EVP_CIPHER_CTX_cleanup(IntPtr ctx);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void EVP_CIPHER_CTX_free(IntPtr ctx);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int EVP_CipherInit_ex(IntPtr ctx, IntPtr cipher, IntPtr _, byte[] key, byte[] iv, int op);
+
+    [DllImport(DLLNAME, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void EVP_CipherUpdate(IntPtr ctx, byte[] output, ref int output_size, byte[] data, int len);
+
 }

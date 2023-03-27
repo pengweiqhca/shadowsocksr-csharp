@@ -16,40 +16,39 @@
 
 using System;
 
-namespace ZXing
+namespace ZXing;
+
+/// <summary>
+/// A base class which covers the range of exceptions which may occur when encoding a barcode using
+/// the Writer framework.
+/// </summary>
+/// <author>dswitkin@google.com (Daniel Switkin)</author>
+[Serializable]
+public sealed class WriterException : Exception
 {
 	/// <summary>
-	/// A base class which covers the range of exceptions which may occur when encoding a barcode using
-	/// the Writer framework.
+	/// Initializes a new instance of the <see cref="WriterException"/> class.
 	/// </summary>
-	/// <author>dswitkin@google.com (Daniel Switkin)</author>
-	[Serializable]
-	public sealed class WriterException : Exception
+	public WriterException()
 	{
-      /// <summary>
-      /// Initializes a new instance of the <see cref="WriterException"/> class.
-      /// </summary>
-		public WriterException()
-		{
-		}
+	}
 
-      /// <summary>
-      /// Initializes a new instance of the <see cref="WriterException"/> class.
-      /// </summary>
-      /// <param name="message">The message.</param>
-      public WriterException(string message)
-         :base(message)
-		{
-		}
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WriterException"/> class.
+	/// </summary>
+	/// <param name="message">The message.</param>
+	public WriterException(string message)
+		:base(message)
+	{
+	}
 
-      /// <summary>
-      /// Initializes a new instance of the <see cref="WriterException"/> class.
-      /// </summary>
-      /// <param name="message">The message.</param>
-      /// <param name="innerExc">The inner exc.</param>
-      public WriterException(string message, Exception innerExc)
-         : base(message, innerExc)
-      {
-      }
-   }
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WriterException"/> class.
+	/// </summary>
+	/// <param name="message">The message.</param>
+	/// <param name="innerExc">The inner exc.</param>
+	public WriterException(string message, Exception innerExc)
+		: base(message, innerExc)
+	{
+	}
 }

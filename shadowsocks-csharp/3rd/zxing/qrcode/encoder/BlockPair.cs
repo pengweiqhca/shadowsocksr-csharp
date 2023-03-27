@@ -14,27 +14,26 @@
 * limitations under the License.
 */
 
-namespace ZXing.QrCode.Internal
+namespace ZXing.QrCode.Internal;
+
+internal sealed class BlockPair
 {
-   internal sealed class BlockPair
+   private readonly byte[] dataBytes;
+   private readonly byte[] errorCorrectionBytes;
+
+   public BlockPair(byte[] data, byte[] errorCorrection)
    {
-      private readonly byte[] dataBytes;
-      private readonly byte[] errorCorrectionBytes;
+      dataBytes = data;
+      errorCorrectionBytes = errorCorrection;
+   }
 
-      public BlockPair(byte[] data, byte[] errorCorrection)
-      {
-         dataBytes = data;
-         errorCorrectionBytes = errorCorrection;
-      }
+   public byte[] DataBytes
+   {
+      get => dataBytes;
+   }
 
-      public byte[] DataBytes
-      {
-         get => dataBytes;
-      }
-
-      public byte[] ErrorCorrectionBytes
-      {
-         get => errorCorrectionBytes;
-      }
+   public byte[] ErrorCorrectionBytes
+   {
+      get => errorCorrectionBytes;
    }
 }
