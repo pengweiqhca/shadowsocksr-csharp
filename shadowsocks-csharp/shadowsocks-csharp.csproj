@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
     <PropertyGroup>
-        <DefineConstants>$(DefineConstants);PROTOCOL_STATISTICS</DefineConstants>
         <RootNamespace>Shadowsocks</RootNamespace>
         <AssemblyName>ShadowsocksR</AssemblyName>
-        <TargetFrameworks>net471;net6.0-windows</TargetFrameworks>
+        <TargetFramework>net6.0-windows</TargetFramework>
         <OutputType>WinExe</OutputType>
         <LangVersion>10.0</LangVersion>
         <ApplicationIcon>shadowsocks.ico</ApplicationIcon>
@@ -13,20 +12,11 @@
         <!--<Nullable>enable</Nullable>-->
         <UseWindowsForms>true</UseWindowsForms>
         <ImplicitUsings>enable</ImplicitUsings>
-        <NoWarn>$(NoWarn);WFAC010</NoWarn>
         <RollForward>Major</RollForward>
         <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
-        <PackageReference Include="IndexRange" Version="1.*" />
-
-        <Reference Include="System.Net.Http" />
-    </ItemGroup>
-
     <ItemGroup>
-        <PackageReference Include="System.Resources.Extensions" Version="6.0" />
-
         <Compile Update="Properties\Resources.Designer.cs">
             <AutoGen>True</AutoGen>
             <DesignTime>True</DesignTime>

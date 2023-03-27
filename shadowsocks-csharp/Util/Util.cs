@@ -28,7 +28,6 @@ namespace Shadowsocks.Util
 
         public static void ReleaseMemory()
         {
-#if !_CONSOLE
             // release any unused pages
             // making the numbers look good in task manager
             // this is totally nonsense in programming
@@ -41,16 +40,15 @@ namespace Shadowsocks.Util
             if (UIntPtr.Size == 4)
             {
                 SetProcessWorkingSetSize(current_process.Handle,
-                                         (UIntPtr)0xFFFFFFFF,
-                                         (UIntPtr)0xFFFFFFFF);
+                    (UIntPtr)0xFFFFFFFF,
+                    (UIntPtr)0xFFFFFFFF);
             }
             else if (UIntPtr.Size == 8)
             {
                 SetProcessWorkingSetSize(current_process.Handle,
-                                         (UIntPtr)0xFFFFFFFFFFFFFFFF,
-                                         (UIntPtr)0xFFFFFFFFFFFFFFFF);
+                    (UIntPtr)0xFFFFFFFFFFFFFFFF,
+                    (UIntPtr)0xFFFFFFFFFFFFFFFF);
             }
-#endif
         }
 
         public static string UnGzip(byte[] buf)
@@ -168,8 +166,7 @@ namespace Shadowsocks.Util
             {
                 var netmasks = new[]
                 {
-                    "127.0.0.0/8",
-                    "169.254.0.0/16",
+                    "127.0.0.0/8", "169.254.0.0/16",
                 };
                 foreach (var netmask in netmasks)
                 {
@@ -205,12 +202,9 @@ namespace Shadowsocks.Util
                     return false;
                 var netmasks = new[]
                 {
-                    "0.0.0.0/8",
-                    "10.0.0.0/8",
+                    "0.0.0.0/8", "10.0.0.0/8",
                     //"100.64.0.0/10", //部分地区运营商貌似在使用这个，这个可能不安全
-                    "127.0.0.0/8",
-                    "169.254.0.0/16",
-                    "172.16.0.0/12",
+                    "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12",
                     //"192.0.0.0/24",
                     //"192.0.2.0/24",
                     "192.168.0.0/16",
@@ -229,9 +223,7 @@ namespace Shadowsocks.Util
             {
                 var netmasks = new[]
                 {
-                    "::1/128",
-                    "fc00::/7",
-                    "fe80::/10",
+                    "::1/128", "fc00::/7", "fe80::/10",
                 };
                 foreach (var netmask in netmasks)
                 {
@@ -308,7 +300,15 @@ namespace Shadowsocks.Util
 
             if (!string.IsNullOrEmpty(dns_servers))
             {
-                var types = IPv6_first ? new[] { Types.AAAA, Types.A } : new[] { Types.A, Types.AAAA };
+                var types = IPv6_first
+                    ? new[]
+                    {
+                        Types.AAAA, Types.A
+                    }
+                    : new[]
+                    {
+                        Types.A, Types.AAAA
+                    };
 
                 var _dns_server = dns_servers.Split(',');
                 var dns_server = new List<IPEndPoint>();
@@ -392,17 +392,12 @@ namespace Shadowsocks.Util
             try
             {
                 using var cts = new CancellationTokenSource(10000);
-#if NETFRAMEWORK
-                var task = Dns.GetHostEntryAsync(host);
-                if (Task.WhenAny(task, Task.Delay(10000, cts.Token)).GetAwaiter().GetResult() != task) return ret_ipAddress;
-                var ipHostEntry = task.GetAwaiter().GetResult();
-#else
+
                 var ipHostEntry = Dns.GetHostEntryAsync(host, cts.Token).GetAwaiter().GetResult();
-#endif
+
                 foreach (var ad in ipHostEntry.AddressList)
                 {
-                    if (ad.AddressFamily == AddressFamily.InterNetwork)
-                        return ad;
+                    if (ad.AddressFamily == AddressFamily.InterNetwork) return ad;
                 }
                 foreach (var ad in ipHostEntry.AddressList)
                 {
@@ -451,7 +446,6 @@ namespace Shadowsocks.Util
             return (dpi * 4 + 48) / 96;
         }
 
-#if !_CONSOLE
         public enum DeviceCap
         {
             DESKTOPVERTRES = 117,
@@ -475,6 +469,5 @@ namespace Shadowsocks.Util
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool SetProcessWorkingSetSize(IntPtr process,
             UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
-#endif
     }
 }

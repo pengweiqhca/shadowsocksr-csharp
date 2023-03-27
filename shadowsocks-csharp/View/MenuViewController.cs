@@ -234,7 +234,8 @@ namespace Shadowsocks.View
                     ruleUser = CreateMenuItem("User custom", RuleUserItem_Click),
                     new ToolStripSeparator(),
                     ruleDisableBypass = CreateMenuItem("Disable bypass", RuleBypassDisableItem_Click)),
-                new ToolStripSeparator(), ServersItem = CreateMenuGroup("Servers",
+                new ToolStripSeparator(),
+                ServersItem = CreateMenuGroup("Servers",
                     SeperatorItem = new ToolStripSeparator(),
                     CreateMenuItem("Edit servers...", Config_Click),
                     CreateMenuItem("Import servers from file...", Import_Click),
@@ -247,8 +248,15 @@ namespace Shadowsocks.View
                     CreateMenuItem("Subscribe setting...", SubscribeSetting_Click),
                     CreateMenuItem("Update subscribe SSR node", CheckNodeUpdate_Click),
                     CreateMenuItem("Update subscribe SSR node(bypass proxy)", CheckNodeUpdateBypassProxy_Click)),
-                SelectRandomItem = CreateMenuItem("Load balance", SelectRandomItem_Click), CreateMenuItem("Global settings...", Setting_Click), CreateMenuItem("Port settings...", ShowPortMapItem_Click), UpdateItem = CreateMenuItem("Update available", UpdateItem_Clicked), new ToolStripSeparator(),
-                CreateMenuItem("Scan QRCode from screen...", ScanQRCodeItem_Click), CreateMenuItem("Import SSR links from clipboard...", CopyAddress_Click), new ToolStripSeparator(), CreateMenuGroup("Help",
+                SelectRandomItem = CreateMenuItem("Load balance", SelectRandomItem_Click),
+                CreateMenuItem("Global settings...", Setting_Click),
+                CreateMenuItem("Port settings...", ShowPortMapItem_Click),
+                UpdateItem = CreateMenuItem("Update available", UpdateItem_Clicked),
+                new ToolStripSeparator(),
+                CreateMenuItem("Scan QRCode from screen...", ScanQRCodeItem_Click),
+                CreateMenuItem("Import SSR links from clipboard...", CopyAddress_Click),
+                new ToolStripSeparator(),
+                CreateMenuGroup("Help",
                     CreateMenuItem("Check update", CheckUpdate_Click),
                     CreateMenuItem("Show logs...", ShowLogItem_Click),
                     CreateMenuItem("Open wiki...", OpenWiki_Click),
@@ -651,9 +659,9 @@ namespace Shadowsocks.View
                     select_group = group_name;
                 }
 
-                if (group.ContainsKey(group_name))
+                if (group.TryGetValue(group_name, out var value))
                 {
-                    group[group_name].DropDownItems.Add(item);
+                    value.DropDownItems.Add(item);
                 }
                 else
                 {
@@ -912,12 +920,12 @@ namespace Shadowsocks.View
 
         private void OpenWiki_Click(object sender, EventArgs e)
         {
-            Process.Start("https://github.com/shadowsocksrr/shadowsocks-rss/wiki");
+            Process.Start(new ProcessStartInfo("https://github.com/shadowsocksrr/shadowsocks-rss/wiki") { UseShellExecute = true });
         }
 
         private void FeedbackItem_Click(object sender, EventArgs e)
         {
-            Process.Start("https://github.com/shadowsocksrr/shadowsocksr-csharp/issues/new");
+            Process.Start(new ProcessStartInfo("https://github.com/shadowsocksrr/shadowsocksr-csharp/issues/new") { UseShellExecute = true });
         }
 
         private void ResetPasswordItem_Click(object sender, EventArgs e)
@@ -929,7 +937,7 @@ namespace Shadowsocks.View
 
         private void AboutItem_Click(object sender, EventArgs e)
         {
-            Process.Start("https://breakwa11.github.io");
+            Process.Start(new ProcessStartInfo("https://breakwa11.github.io") { UseShellExecute = true });
         }
 
         private void DonateItem_Click(object sender, EventArgs e)

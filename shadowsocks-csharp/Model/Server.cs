@@ -1,6 +1,4 @@
 using System.Text;
-#if !_CONSOLE
-#endif
 using Shadowsocks.Controller;
 using System.Text.RegularExpressions;
 using System.Net;
@@ -85,6 +83,7 @@ namespace Shadowsocks.Model
                 }
             }
         }
+
         public int Count
         {
             get => sockets.Count;
@@ -275,22 +274,17 @@ namespace Shadowsocks.Model
             }
         }
 
-        public bool isMatchServer(Server server)
-        {
-            if (this.server == server.server
-                && server_port == server.server_port
-                && server_udp_port == server.server_udp_port
-                && method == server.method
-                && protocol == server.protocol
-                && protocolparam == server.protocolparam
-                && obfs == server.obfs
-                && obfsparam == server.obfsparam
-                && password == server.password
-                && udp_over_tcp == server.udp_over_tcp
-                )
-                return true;
-            return false;
-        }
+        public bool isMatchServer(Server server) =>
+            this.server == server.server &&
+            server_port == server.server_port &&
+            server_udp_port == server.server_udp_port &&
+            method == server.method &&
+            protocol == server.protocol &&
+            protocolparam == server.protocolparam &&
+            obfs == server.obfs &&
+            obfsparam == server.obfsparam &&
+            password == server.password &&
+            udp_over_tcp == server.udp_over_tcp;
 
         private Dictionary<string, string> ParseParam(string param_str)
         {
@@ -347,34 +341,30 @@ namespace Shadowsocks.Model
             obfs = obfs.Replace("_compatible", "");
             password = Util.Base64.DecodeStandardSSRUrlSafeBase64(match.Groups[6].Value);
 
-            if (params_dict.ContainsKey("protoparam"))
+            if (params_dict.TryGetValue("protoparam", out var value))
             {
-                protocolparam = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["protoparam"]);
+                protocolparam = Util.Base64.DecodeStandardSSRUrlSafeBase64(value);
             }
-            if (params_dict.ContainsKey("obfsparam"))
+            if (params_dict.TryGetValue("obfsparam", out value))
             {
-                obfsparam = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["obfsparam"]);
+                obfsparam = Util.Base64.DecodeStandardSSRUrlSafeBase64(value);
             }
-            if (params_dict.ContainsKey("remarks"))
+            if (params_dict.TryGetValue("remarks", out value))
             {
-                remarks = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["remarks"]);
+                remarks = Util.Base64.DecodeStandardSSRUrlSafeBase64(value);
             }
-            if (params_dict.ContainsKey("group"))
+            group = params_dict.TryGetValue("group", out value) ? Util.Base64.DecodeStandardSSRUrlSafeBase64(value) : "";
+
+            if (params_dict.TryGetValue("uot", out value))
             {
-                group = Util.Base64.DecodeStandardSSRUrlSafeBase64(params_dict["group"]);
+                udp_over_tcp = int.Parse(value) != 0;
             }
-            else
-                group = "";
-            if (params_dict.ContainsKey("uot"))
+            if (params_dict.TryGetValue("udpport", out value))
             {
-                udp_over_tcp = int.Parse(params_dict["uot"]) != 0;
+                server_udp_port = ushort.Parse(value);
             }
-            if (params_dict.ContainsKey("udpport"))
-            {
-                server_udp_port = ushort.Parse(params_dict["udpport"]);
-            }
-            if (!string.IsNullOrEmpty(force_group))
-                group = force_group;
+
+            if (!string.IsNullOrEmpty(force_group)) group = force_group;
         }
 
         public void ServerFromSS(string ssURL, string force_group)

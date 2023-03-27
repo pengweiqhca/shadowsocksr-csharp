@@ -1293,9 +1293,9 @@ namespace SimpleJson
                                     continue;
 
                                 var jsonKey = keyValuePair.Key;
-                                if (kvps.ContainsKey(jsonKey))
+                                if (kvps.TryGetValue(jsonKey, out var kvp))
                                 {
-                                    var jsonValue = DeserializeObject(kvps[jsonKey], v.Type);
+                                    var jsonValue = DeserializeObject(kvp, v.Type);
                                     v.Setter(obj, jsonValue);
                                 }
                             }

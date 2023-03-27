@@ -145,7 +145,7 @@ namespace Shadowsocks.Controller
 
         private int GetFreePort()
         {
-            var defaultPort = 60000;
+            const int defaultPort = 60000;
             try
             {
                 var random = new Random(Util.Utils.GetExecutablePath().GetHashCode() ^ (int)DateTime.Now.Ticks);

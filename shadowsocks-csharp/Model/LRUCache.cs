@@ -51,7 +51,7 @@ namespace Shadowsocks.Model
         {
             lock (_lock)
             {
-                if (_store.ContainsKey(key))
+                if (_store.TryGetValue(key, out var value))
                 {
                     var t = _key_2_time[key];
                     _key_2_time.Remove(key);
@@ -63,7 +63,7 @@ namespace Shadowsocks.Model
                     }
                     _time_2_key[t] = key;
                     _key_2_time[key] = t;
-                    return _store[key];
+                    return value;
                 }
                 return default;
             }

@@ -12,15 +12,16 @@ namespace Shadowsocks.View
             public DoubleBufferListView()
             {
                 SetStyle(ControlStyles.DoubleBuffer
-                        | ControlStyles.OptimizedDoubleBuffer
-                        | ControlStyles.UserPaint
-                        | ControlStyles.AllPaintingInWmPaint
-                        , true);
+                         | ControlStyles.OptimizedDoubleBuffer
+                         | ControlStyles.UserPaint
+                         | ControlStyles.AllPaintingInWmPaint
+                    , true);
                 UpdateStyles();
             }
         }
 
         private readonly ShadowsocksController controller;
+
         //private ContextMenuStrip contextMenu1;
         private readonly ToolStripMenuItem topmostItem;
         private readonly ToolStripMenuItem clearItem;
@@ -113,7 +114,7 @@ namespace Shadowsocks.View
 
         private void UpdateTitle()
         {
-            Text = $"{title_perfix}{I18N.GetString("ServerLog")}({(controller.GetCurrentConfiguration().shareOverLan ? "any" : "local")}:{controller.GetCurrentConfiguration().localPort}({Model.Server.GetForwardServerRef().GetConnections().Count}) {I18N.GetString("Version")}{UpdateChecker.FullVersion})";
+            Text = $@"{title_perfix}{I18N.GetString("ServerLog")}({(controller.GetCurrentConfiguration().shareOverLan ? "any" : "local")}:{controller.GetCurrentConfiguration().localPort}({Model.Server.GetForwardServerRef().GetConnections().Count}) {I18N.GetString("Version")}{UpdateChecker.FullVersion})";
         }
         private void UpdateTexts()
         {
@@ -274,8 +275,8 @@ namespace Shadowsocks.View
             try
             {
                 for (int list_index = lastRefreshIndex >= ServerDataGrid.RowCount ? 0 : lastRefreshIndex, rowChangeCnt = 0;
-                    list_index < ServerDataGrid.RowCount && rowChangeCnt <= 100;
-                    ++list_index)
+                     list_index < ServerDataGrid.RowCount && rowChangeCnt <= 100;
+                     ++list_index)
                 {
                     lastRefreshIndex = list_index + 1;
 
@@ -287,273 +288,253 @@ namespace Shadowsocks.View
                     rowChange = false;
                     for (var curcol = 0; curcol < ServerDataGrid.Columns.Count; ++curcol)
                     {
-                        if (!firstDispley
-                            && (ServerDataGrid.SortedColumn == null || ServerDataGrid.SortedColumn.Index != curcol)
-                            && (list_index < displayBeginIndex || list_index >= displayEndIndex))
-                            continue;
+                        if (!firstDispley &&
+                            (ServerDataGrid.SortedColumn == null || ServerDataGrid.SortedColumn.Index != curcol) &&
+                            (list_index < displayBeginIndex || list_index >= displayEndIndex)) continue;
+
                         var cell = ServerDataGrid[curcol, list_index];
-                        var columnName = ServerDataGrid.Columns[curcol].Name;
-                        // Server
-                        if (columnName == "Server")
+                        switch (ServerDataGrid.Columns[curcol].Name)
                         {
-                            if (config.index == id)
-                                SetBackColor(cell, Color.Cyan);
-                            else
-                                SetBackColor(cell, Color.White);
-                            SetCellText(cell, server.FriendlyName());
-                        }
-                        if (columnName == "Group")
-                        {
-                            SetCellText(cell, server.group);
-                        }
-                        // Enable
-                        if (columnName == "Enable")
-                        {
-                            if (server.isEnable())
-                                SetBackColor(cell, Color.White);
-                            else
-                                SetBackColor(cell, Color.Red);
-                        }
-                        // TotalConnectTimes
-                        else if (columnName == "TotalConnect")
-                        {
-                            SetCellText(cell, serverSpeedLog.totalConnectTimes);
-                        }
-                        // TotalConnecting
-                        else if (columnName == "Connecting")
-                        {
-                            var connections = serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes;
-                            //long ref_connections = server.GetConnections().Count;
-                            //if (ref_connections < connections)
-                            //{
-                            //    connections = ref_connections;
-                            //}
-                            var colList = new Color[5] { Color.White, Color.LightGreen, Color.Yellow, Color.Red, Color.Red };
-                            var bytesList = new long[5] { 0, 16, 32, 64, 65536 };
-                            for (var i = 1; i < colList.Length; ++i)
+                            case "Server":
+                                SetBackColor(cell, config.index == id ? Color.Cyan : Color.White);
+                                SetCellText(cell, server.FriendlyName());
+                                break;
+                            case "Group":
+                                SetCellText(cell, server.group);
+                                break;
+                            case "Enable":
+                                SetBackColor(cell, server.isEnable() ? Color.White : Color.Red);
+                                break;
+                            case "TotalConnect":
+                                SetCellText(cell, serverSpeedLog.totalConnectTimes);
+                                break;
+                            case "Connecting":
                             {
-                                if (connections < bytesList[i])
+                                var connections = serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes;
+                                var colList = new[]
                                 {
-                                    SetBackColor(cell,
-                                        ColorMix(colList[i - 1],
-                                            colList[i],
-                                            (double)(connections - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])
-                                        )
-                                        );
-                                    break;
+                                    Color.White, Color.LightGreen, Color.Yellow, Color.Red, Color.Red
+                                };
+                                var bytesList = new[]
+                                {
+                                    0L, 16, 32, 64, 65536
+                                };
+                                for (var i = 1; i < colList.Length; ++i)
+                                {
+                                    if (connections < bytesList[i])
+                                    {
+                                        SetBackColor(cell, ColorMix(colList[i - 1], colList[i],
+                                            (double)(connections - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])));
+                                        break;
+                                    }
                                 }
+                                SetCellText(cell, serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes);
+                                break;
                             }
-                            SetCellText(cell, serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes);
-                        }
-                        // AvgConnectTime
-                        else if (columnName == "AvgLatency")
-                        {
-                            if (serverSpeedLog.avgConnectTime >= 0)
+                            case "AvgLatency" when serverSpeedLog.avgConnectTime >= 0:
                                 SetCellText(cell, serverSpeedLog.avgConnectTime / 1000);
-                            else
+                                break;
+                            case "AvgLatency":
                                 SetCellText(cell, "-");
-                        }
-                        // AvgDownSpeed
-                        else if (columnName == "AvgDownSpeed")
-                        {
-                            var avgBytes = serverSpeedLog.avgDownloadBytes;
-                            var valStr = FormatBytes(avgBytes);
-                            var colList = new Color[6] { Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red };
-                            var bytesList = new long[6] { 0, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024L * 1024 * 1024 * 1024 };
-                            for (var i = 1; i < colList.Length; ++i)
+                                break;
+                            case "AvgDownSpeed":
                             {
-                                if (avgBytes < bytesList[i])
+                                var avgBytes = serverSpeedLog.avgDownloadBytes;
+                                var valStr = FormatBytes(avgBytes);
+                                var colList = new[]
                                 {
-                                    SetBackColor(cell,
-                                        ColorMix(colList[i - 1],
-                                            colList[i],
-                                            (double)(avgBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])
-                                        )
-                                        );
-                                    break;
-                                }
-                            }
-                            SetCellText(cell, valStr);
-                        }
-                        // MaxDownSpeed
-                        else if (columnName == "MaxDownSpeed")
-                        {
-                            var maxBytes = serverSpeedLog.maxDownloadBytes;
-                            var valStr = FormatBytes(maxBytes);
-                            var colList = new Color[6] { Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red };
-                            var bytesList = new long[6] { 0, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024 * 1024 * 1024 };
-                            for (var i = 1; i < colList.Length; ++i)
-                            {
-                                if (maxBytes < bytesList[i])
+                                    Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red
+                                };
+                                var bytesList = new[]
                                 {
-                                    SetBackColor(cell,
-                                        ColorMix(colList[i - 1],
-                                            colList[i],
-                                            (double)(maxBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])
-                                        )
-                                        );
-                                    break;
-                                }
-                            }
-                            SetCellText(cell, valStr);
-                        }
-                        // AvgUpSpeed
-                        else if (columnName == "AvgUpSpeed")
-                        {
-                            var avgBytes = serverSpeedLog.avgUploadBytes;
-                            var valStr = FormatBytes(avgBytes);
-                            var colList = new Color[6] { Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red };
-                            var bytesList = new long[6] { 0, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024L * 1024 * 1024 * 1024 };
-                            for (var i = 1; i < colList.Length; ++i)
-                            {
-                                if (avgBytes < bytesList[i])
+                                    0, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024L * 1024 * 1024 * 1024
+                                };
+                                for (var i = 1; i < colList.Length; ++i)
                                 {
-                                    SetBackColor(cell,
-                                        ColorMix(colList[i - 1],
-                                            colList[i],
-                                            (double)(avgBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])
-                                        )
-                                        );
-                                    break;
+                                    if (avgBytes < bytesList[i])
+                                    {
+                                        SetBackColor(cell, ColorMix(colList[i - 1], colList[i],
+                                            (double)(avgBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])));
+                                        break;
+                                    }
                                 }
+                                SetCellText(cell, valStr);
+                                break;
                             }
-                            SetCellText(cell, valStr);
-                        }
-                        // MaxUpSpeed
-                        else if (columnName == "MaxUpSpeed")
-                        {
-                            var maxBytes = serverSpeedLog.maxUploadBytes;
-                            var valStr = FormatBytes(maxBytes);
-                            var colList = new Color[6] { Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red };
-                            var bytesList = new long[6] { 0, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024 * 1024 * 1024 };
-                            for (var i = 1; i < colList.Length; ++i)
+                            case "MaxDownSpeed":
                             {
-                                if (maxBytes < bytesList[i])
+                                var maxBytes = serverSpeedLog.maxDownloadBytes;
+                                var valStr = FormatBytes(maxBytes);
+                                var colList = new[]
                                 {
-                                    SetBackColor(cell,
-                                        ColorMix(colList[i - 1],
-                                            colList[i],
-                                            (double)(maxBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])
-                                        )
-                                        );
-                                    break;
-                                }
-                            }
-                            SetCellText(cell, valStr);
-                        }
-                        // TotalUploadBytes
-                        else if (columnName == "Upload")
-                        {
-                            var valStr = FormatBytes(serverSpeedLog.totalUploadBytes);
-                            var fullVal = serverSpeedLog.totalUploadBytes.ToString();
-                            if (cell.ToolTipText != fullVal)
-                            {
-                                if (fullVal == "0")
-                                    SetBackColor(cell, Color.FromArgb(0xf4, 0xff, 0xf4));
-                                else
+                                    Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red
+                                };
+                                var bytesList = new[]
                                 {
-                                    SetBackColor(cell, Color.LightGreen);
-                                    cell.Tag = 8;
-                                }
-                            }
-                            else if (cell.Tag != null)
-                            {
-                                cell.Tag = (int)cell.Tag - 1;
-                                if ((int)cell.Tag == 0) SetBackColor(cell, Color.FromArgb(0xf4, 0xff, 0xf4));
-                                //Color col = cell.Style.BackColor;
-                                //SetBackColor(cell, Color.FromArgb(Math.Min(255, col.R + colAdd), Math.Min(255, col.G + colAdd), Math.Min(255, col.B + colAdd)));
-                            }
-                            SetCellToolTipText(cell, fullVal);
-                            SetCellText(cell, valStr);
-                        }
-                        // TotalDownloadBytes
-                        else if (columnName == "Download")
-                        {
-                            var valStr = FormatBytes(serverSpeedLog.totalDownloadBytes);
-                            var fullVal = serverSpeedLog.totalDownloadBytes.ToString();
-                            if (cell.ToolTipText != fullVal)
-                            {
-                                if (fullVal == "0")
-                                    SetBackColor(cell, Color.FromArgb(0xff, 0xf0, 0xf0));
-                                else
+                                    0L, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024 * 1024 * 1024
+                                };
+                                for (var i = 1; i < colList.Length; ++i)
                                 {
-                                    SetBackColor(cell, Color.LightGreen);
-                                    cell.Tag = 8;
+                                    if (maxBytes < bytesList[i])
+                                    {
+                                        SetBackColor(cell, ColorMix(colList[i - 1], colList[i],
+                                            (double)(maxBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])));
+                                        break;
+                                    }
                                 }
+                                SetCellText(cell, valStr);
+                                break;
                             }
-                            else if (cell.Tag != null)
+                            case "AvgUpSpeed":
                             {
-                                cell.Tag = (int)cell.Tag - 1;
-                                if ((int)cell.Tag == 0) SetBackColor(cell, Color.FromArgb(0xff, 0xf0, 0xf0));
-                                //Color col = cell.Style.BackColor;
-                                //SetBackColor(cell, Color.FromArgb(Math.Min(255, col.R + colAdd), Math.Min(255, col.G + colAdd), Math.Min(255, col.B + colAdd)));
-                            }
-                            SetCellToolTipText(cell, fullVal);
-                            SetCellText(cell, valStr);
-                        }
-                        else if (columnName == "DownloadRaw")
-                        {
-                            var valStr = FormatBytes(serverSpeedLog.totalDownloadRawBytes);
-                            var fullVal = serverSpeedLog.totalDownloadRawBytes.ToString();
-                            if (cell.ToolTipText != fullVal)
-                            {
-                                if (fullVal == "0")
-                                    SetBackColor(cell, Color.FromArgb(0xff, 0x80, 0x80));
-                                else
+                                var avgBytes = serverSpeedLog.avgUploadBytes;
+                                var valStr = FormatBytes(avgBytes);
+                                var colList = new[]
                                 {
-                                    SetBackColor(cell, Color.LightGreen);
-                                    cell.Tag = 8;
+                                    Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red
+                                };
+                                var bytesList = new[]
+                                {
+                                    0, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024L * 1024 * 1024 * 1024
+                                };
+                                for (var i = 1; i < colList.Length; ++i)
+                                {
+                                    if (avgBytes < bytesList[i])
+                                    {
+                                        SetBackColor(cell, ColorMix(colList[i - 1], colList[i],
+                                            (double)(avgBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])));
+                                        break;
+                                    }
                                 }
+                                SetCellText(cell, valStr);
+                                break;
                             }
-                            else if (cell.Tag != null)
+                            case "MaxUpSpeed":
                             {
-                                cell.Tag = (int)cell.Tag - 1;
-                                if ((int)cell.Tag == 0)
+                                var maxBytes = serverSpeedLog.maxUploadBytes;
+                                var valStr = FormatBytes(maxBytes);
+                                var colList = new[]
+                                {
+                                    Color.White, Color.LightGreen, Color.Yellow, Color.Pink, Color.Red, Color.Red
+                                };
+                                var bytesList = new[]
+                                {
+                                    0L, 1024 * 64, 1024 * 512, 1024 * 1024 * 4, 1024 * 1024 * 16, 1024 * 1024 * 1024
+                                };
+                                for (var i = 1; i < colList.Length; ++i)
+                                {
+                                    if (maxBytes < bytesList[i])
+                                    {
+                                        SetBackColor(cell, ColorMix(colList[i - 1], colList[i],
+                                            (double)(maxBytes - bytesList[i - 1]) / (bytesList[i] - bytesList[i - 1])));
+                                        break;
+                                    }
+                                }
+                                SetCellText(cell, valStr);
+                                break;
+                            }
+                            case "Upload":
+                            {
+                                var valStr = FormatBytes(serverSpeedLog.totalUploadBytes);
+                                var fullVal = serverSpeedLog.totalUploadBytes.ToString();
+                                if (cell.ToolTipText != fullVal)
+                                {
+                                    if (fullVal == "0")
+                                        SetBackColor(cell, Color.FromArgb(0xf4, 0xff, 0xf4));
+                                    else
+                                    {
+                                        SetBackColor(cell, Color.LightGreen);
+                                        cell.Tag = 8;
+                                    }
+                                }
+                                else if (cell.Tag != null)
+                                {
+                                    cell.Tag = (int)cell.Tag - 1;
+                                    if ((int)cell.Tag == 0) SetBackColor(cell, Color.FromArgb(0xf4, 0xff, 0xf4));
+                                }
+                                SetCellToolTipText(cell, fullVal);
+                                SetCellText(cell, valStr);
+                                break;
+                            }
+                            case "Download":
+                            {
+                                var valStr = FormatBytes(serverSpeedLog.totalDownloadBytes);
+                                var fullVal = serverSpeedLog.totalDownloadBytes.ToString();
+                                if (cell.ToolTipText != fullVal)
+                                {
+                                    if (fullVal == "0")
+                                        SetBackColor(cell, Color.FromArgb(0xff, 0xf0, 0xf0));
+                                    else
+                                    {
+                                        SetBackColor(cell, Color.LightGreen);
+                                        cell.Tag = 8;
+                                    }
+                                }
+                                else if (cell.Tag != null)
+                                {
+                                    cell.Tag = (int)cell.Tag - 1;
+                                    if ((int)cell.Tag == 0) SetBackColor(cell, Color.FromArgb(0xff, 0xf0, 0xf0));
+                                }
+                                SetCellToolTipText(cell, fullVal);
+                                SetCellText(cell, valStr);
+                                break;
+                            }
+                            case "DownloadRaw":
+                            {
+                                var valStr = FormatBytes(serverSpeedLog.totalDownloadRawBytes);
+                                var fullVal = serverSpeedLog.totalDownloadRawBytes.ToString();
+                                if (cell.ToolTipText != fullVal)
                                 {
                                     if (fullVal == "0")
                                         SetBackColor(cell, Color.FromArgb(0xff, 0x80, 0x80));
                                     else
-                                        SetBackColor(cell, Color.FromArgb(0xf0, 0xf0, 0xff));
+                                    {
+                                        SetBackColor(cell, Color.LightGreen);
+                                        cell.Tag = 8;
+                                    }
                                 }
-                                //Color col = cell.Style.BackColor;
-                                //SetBackColor(cell, Color.FromArgb(Math.Min(255, col.R + colAdd), Math.Min(255, col.G + colAdd), Math.Min(255, col.B + colAdd)));
+                                else if (cell.Tag != null)
+                                {
+                                    cell.Tag = (int)cell.Tag - 1;
+                                    if ((int)cell.Tag == 0)
+                                    {
+                                        SetBackColor(cell, fullVal == "0" ? Color.FromArgb(0xff, 0x80, 0x80) : Color.FromArgb(0xf0, 0xf0, 0xff));
+                                    }
+                                    //Color col = cell.Style.BackColor;
+                                    //SetBackColor(cell, Color.FromArgb(Math.Min(255, col.R + colAdd), Math.Min(255, col.G + colAdd), Math.Min(255, col.B + colAdd)));
+                                }
+                                SetCellToolTipText(cell, fullVal);
+                                SetCellText(cell, valStr);
+                                break;
                             }
-                            SetCellToolTipText(cell, fullVal);
-                            SetCellText(cell, valStr);
-                        }
-                        // ErrorConnectTimes
-                        else if (columnName == "ConnectError")
-                        {
-                            var val = serverSpeedLog.errorConnectTimes + serverSpeedLog.errorDecodeTimes;
-                            var col = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 2.5), (byte)Math.Max(0, 255 - val * 2.5));
-                            SetBackColor(cell, col);
-                            SetCellText(cell, val);
-                        }
-                        // ErrorTimeoutTimes
-                        else if (columnName == "ConnectTimeout")
-                        {
-                            SetCellText(cell, serverSpeedLog.errorTimeoutTimes);
-                        }
-                        // ErrorTimeoutTimes
-                        else if (columnName == "ConnectEmpty")
-                        {
-                            var val = serverSpeedLog.errorEmptyTimes;
-                            var col = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
-                            SetBackColor(cell, col);
-                            SetCellText(cell, val);
-                        }
-                        // ErrorContinurousTimes
-                        else if (columnName == "Continuous")
-                        {
-                            var val = serverSpeedLog.errorContinurousTimes;
-                            var col = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
-                            SetBackColor(cell, col);
-                            SetCellText(cell, val);
-                        }
-                        // ErrorPersent
-                        else if (columnName == "ErrorPercent")
-                        {
-                            if (serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes > 0)
+                            case "ConnectError":
+                            {
+                                var val = serverSpeedLog.errorConnectTimes + serverSpeedLog.errorDecodeTimes;
+                                var col = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 2.5), (byte)Math.Max(0, 255 - val * 2.5));
+                                SetBackColor(cell, col);
+                                SetCellText(cell, val);
+                                break;
+                            }
+                            case "ConnectTimeout":
+                                SetCellText(cell, serverSpeedLog.errorTimeoutTimes);
+                                break;
+                            case "ConnectEmpty":
+                            {
+                                var val = serverSpeedLog.errorEmptyTimes;
+                                var col = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
+                                SetBackColor(cell, col);
+                                SetCellText(cell, val);
+                                break;
+                            }
+                            case "Continuous":
+                            {
+                                var val = serverSpeedLog.errorContinurousTimes;
+                                var col = Color.FromArgb(255, (byte)Math.Max(0, 255 - val * 8), (byte)Math.Max(0, 255 - val * 8));
+                                SetBackColor(cell, col);
+                                SetCellText(cell, val);
+                                break;
+                            }
+                            case "ErrorPercent" when serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes > 0:
                             {
                                 var percent = (serverSpeedLog.errorConnectTimes
                                                + serverSpeedLog.errorTimeoutTimes
@@ -562,14 +543,15 @@ namespace Shadowsocks.View
                                               / (serverSpeedLog.errorLogTimes + serverSpeedLog.totalConnectTimes - serverSpeedLog.totalDisconnectTimes);
                                 SetBackColor(cell, Color.FromArgb(255, (byte)(255 - percent * 2), (byte)(255 - percent * 2)));
                                 SetCellText(cell, $"{percent:F0}%");
+                                break;
                             }
-                            else
-                            {
+                            case "ErrorPercent":
                                 SetBackColor(cell, Color.White);
                                 SetCellText(cell, "-");
-                            }
+                                break;
                         }
                     }
+
                     if (rowChange && list_index >= displayBeginIndex && list_index < displayEndIndex)
                         rowChangeCnt++;
                 }
@@ -600,13 +582,13 @@ namespace Shadowsocks.View
             {
                 var name = ServerDataGrid.Columns[i].Name;
                 if (name is "AvgLatency" or "AvgDownSpeed" or "MaxDownSpeed" or "AvgUpSpeed" or "MaxUpSpeed" or "Upload" or "Download" or "DownloadRaw" or "Group" or "Connecting" or "ErrorPercent" or "ConnectError" or "ConnectTimeout" or "Continuous" or "ConnectEmpty"
-                    )
+                   )
                 {
                     if (ServerDataGrid.Columns[i].Width <= 2)
                         continue;
                     ServerDataGrid.AutoResizeColumn(i, DataGridViewAutoSizeColumnMode.AllCellsExceptHeader);
                     if (name is "AvgLatency" or "Connecting" or "AvgDownSpeed" or "MaxDownSpeed" or "AvgUpSpeed" or "MaxUpSpeed"
-                        )
+                       )
                     {
                         ServerDataGrid.Columns[i].MinimumWidth = ServerDataGrid.Columns[i].Width;
                     }
@@ -638,7 +620,9 @@ namespace Shadowsocks.View
                     var link = config.configs[config.index].GetSSRLinkForServer();
                     Clipboard.SetText(link);
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
@@ -648,51 +632,41 @@ namespace Shadowsocks.View
             if (config.index >= 0 && config.index < config.configs.Count)
             {
                 var group = config.configs[config.index].group;
-                var link = "";
-                for (var index = 0; index < config.configs.Count; ++index)
-                {
-                    if (config.configs[index].group != group)
-                        continue;
-                    link += $"{config.configs[index].GetSSRLinkForServer()}\r\n";
-                }
+                var link = config.configs.Where(t => t.group == group).Aggregate("", (current, t) => current + $"{t.GetSSRLinkForServer()}\r\n");
                 try
                 {
                     Clipboard.SetText(link);
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
         private void copyEnableLinksItem_Click(object sender, EventArgs e)
         {
             var config = controller.GetCurrentConfiguration();
-            var link = "";
-            for (var index = 0; index < config.configs.Count; ++index)
-            {
-                if (!config.configs[index].enable)
-                    continue;
-                link += $"{config.configs[index].GetSSRLinkForServer()}\r\n";
-            }
+            var link = config.configs.Where(t => t.enable).Aggregate("", (current, t) => current + $"{t.GetSSRLinkForServer()}\r\n");
             try
             {
                 Clipboard.SetText(link);
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void copyLinksItem_Click(object sender, EventArgs e)
         {
             var config = controller.GetCurrentConfiguration();
-            var link = "";
-            for (var index = 0; index < config.configs.Count; ++index)
-            {
-                link += $"{config.configs[index].GetSSRLinkForServer()}\r\n";
-            }
+            var link = config.configs.Aggregate("", (current, t) => current + $"{t.GetSSRLinkForServer()}\r\n");
             try
             {
                 Clipboard.SetText(link);
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void topmostItem_Click(object sender, EventArgs e)
@@ -730,7 +704,9 @@ namespace Shadowsocks.View
                 {
                     controller.ClearTransferTotal(config.configs[config.index].server);
                 }
-                catch { }
+                catch
+                {
+                }
             }
         }
 
@@ -783,26 +759,23 @@ namespace Shadowsocks.View
 
         private void ServerDataGrid_MouseUp(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button != MouseButtons.Left) return;
+
+            int row_index = -1, col_index = -1;
+            if (ServerDataGrid.SelectedCells.Count > 0)
             {
+                row_index = ServerDataGrid.SelectedCells[0].RowIndex;
+                col_index = ServerDataGrid.SelectedCells[0].ColumnIndex;
             }
-            else if (e.Button == MouseButtons.Left)
+            if (row_index >= 0)
             {
-                int row_index = -1, col_index = -1;
-                if (ServerDataGrid.SelectedCells.Count > 0)
+                var id = (int)ServerDataGrid[0, row_index].Value;
+                switch (ServerDataGrid.Columns[col_index].Name)
                 {
-                    row_index = ServerDataGrid.SelectedCells[0].RowIndex;
-                    col_index = ServerDataGrid.SelectedCells[0].ColumnIndex;
-                }
-                if (row_index >= 0)
-                {
-                    var id = (int)ServerDataGrid[0, row_index].Value;
-                    if (ServerDataGrid.Columns[col_index].Name == "Server")
-                    {
-                        var config = controller.GetCurrentConfiguration();
+                    case "Server":
                         controller.SelectServerIndex(id);
-                    }
-                    if (ServerDataGrid.Columns[col_index].Name == "Group")
+                        break;
+                    case "Group":
                     {
                         var config = controller.GetCurrentConfiguration();
                         var cur_server = config.configs[id];
@@ -810,47 +783,45 @@ namespace Shadowsocks.View
                         if (!string.IsNullOrEmpty(group))
                         {
                             var enable = !cur_server.enable;
-                            foreach (var server in config.configs)
+                            foreach (var server in config.configs.Where(server => server.group == group && server.enable != enable))
                             {
-                                if (server.group == group)
-                                {
-                                    if (server.enable != enable)
-                                    {
-                                        server.setEnable(enable);
-                                    }
-                                }
+                                server.setEnable(enable);
                             }
                             controller.SelectServerIndex(config.index);
                         }
+                        break;
                     }
-                    if (ServerDataGrid.Columns[col_index].Name == "Enable")
+                    case "Enable":
                     {
                         var config = controller.GetCurrentConfiguration();
                         var server = config.configs[id];
                         server.setEnable(!server.isEnable());
                         controller.SelectServerIndex(config.index);
+                        break;
                     }
-                    ServerDataGrid[0, row_index].Selected = true;
                 }
+                ServerDataGrid[0, row_index].Selected = true;
             }
         }
 
         private void ServerDataGrid_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
+            if (e.RowIndex < 0) return;
+
+            var id = (int)ServerDataGrid[0, e.RowIndex].Value;
+            switch (ServerDataGrid.Columns[e.ColumnIndex].Name)
             {
-                var id = (int)ServerDataGrid[0, e.RowIndex].Value;
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Server")
+                case "Server":
                 {
                     var config = controller.GetCurrentConfiguration();
-                    Console.WriteLine($"config.checkSwitchAutoCloseAll:{config.checkSwitchAutoCloseAll}");
                     if (config.checkSwitchAutoCloseAll)
                     {
                         controller.DisconnectAllConnections();
                     }
                     controller.SelectServerIndex(id);
+                    break;
                 }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Group")
+                case "Group":
                 {
                     var config = controller.GetCurrentConfiguration();
                     var cur_server = config.configs[id];
@@ -858,74 +829,75 @@ namespace Shadowsocks.View
                     if (!string.IsNullOrEmpty(group))
                     {
                         var enable = !cur_server.enable;
-                        foreach (var server in config.configs)
+                        foreach (var server in config.configs.Where(server => server.group == group && server.enable != enable))
                         {
-                            if (server.group == group)
-                            {
-                                if (server.enable != enable)
-                                {
-                                    server.setEnable(enable);
-                                }
-                            }
+                            server.setEnable(enable);
                         }
                         controller.SelectServerIndex(config.index);
                     }
+                    break;
                 }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Enable")
+                case "Enable":
                 {
                     var config = controller.GetCurrentConfiguration();
                     var server = config.configs[id];
                     server.setEnable(!server.isEnable());
                     controller.SelectServerIndex(config.index);
+                    break;
                 }
-                ServerDataGrid[0, e.RowIndex].Selected = true;
             }
+            ServerDataGrid[0, e.RowIndex].Selected = true;
         }
 
         private void ServerDataGrid_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
+            if (e.RowIndex < 0) return;
+
+            var id = (int)ServerDataGrid[0, e.RowIndex].Value;
+            if (ServerDataGrid.Columns[e.ColumnIndex].Name == "ID")
             {
-                var id = (int)ServerDataGrid[0, e.RowIndex].Value;
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "ID")
-                {
-                    controller.ShowConfigForm(id);
-                }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Server")
-                {
-                    controller.ShowConfigForm(id);
-                }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Connecting")
-                {
-                    var config = controller.GetCurrentConfiguration();
-                    var server = config.configs[id];
-                    server.GetConnections().CloseAll();
-                }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name is "MaxDownSpeed" or "MaxUpSpeed")
+                controller.ShowConfigForm(id);
+            }
+            if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Server")
+            {
+                controller.ShowConfigForm(id);
+            }
+            if (ServerDataGrid.Columns[e.ColumnIndex].Name == "Connecting")
+            {
+                var config = controller.GetCurrentConfiguration();
+                var server = config.configs[id];
+                server.GetConnections().CloseAll();
+            }
+            switch (ServerDataGrid.Columns[e.ColumnIndex].Name)
+            {
+                case "MaxDownSpeed" or "MaxUpSpeed":
                 {
                     var config = controller.GetCurrentConfiguration();
                     config.configs[id].ServerSpeedLog().ClearMaxSpeed();
+                    break;
                 }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name is "Upload" or "Download")
+                case "Upload" or "Download":
                 {
                     var config = controller.GetCurrentConfiguration();
                     config.configs[id].ServerSpeedLog().ClearTrans();
+                    break;
                 }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name == "DownloadRaw")
+                case "DownloadRaw":
                 {
                     var config = controller.GetCurrentConfiguration();
                     config.configs[id].ServerSpeedLog().Clear();
                     config.configs[id].setEnable(true);
+                    break;
                 }
-                if (ServerDataGrid.Columns[e.ColumnIndex].Name is "ConnectError" or "ConnectTimeout" or "ConnectEmpty" or "Continuous"
-                    )
+                case "ConnectError" or "ConnectTimeout" or "ConnectEmpty" or "Continuous":
                 {
                     var config = controller.GetCurrentConfiguration();
                     config.configs[id].ServerSpeedLog().ClearError();
                     config.configs[id].setEnable(true);
+                    break;
                 }
-                ServerDataGrid[0, e.RowIndex].Selected = true;
             }
+            ServerDataGrid[0, e.RowIndex].Selected = true;
         }
 
         private void ServerLogForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -984,7 +956,7 @@ namespace Shadowsocks.View
                 e.Handled = true;
             }
             else if (e.Column.Name is "ID" or "TotalConnect" or "Connecting" or "ConnectError" or "ConnectTimeout" or "Continuous"
-                )
+                    )
             {
                 var v1 = Convert.ToInt32(e.CellValue1);
                 var v2 = Convert.ToInt32(e.CellValue2);
@@ -999,7 +971,7 @@ namespace Shadowsocks.View
                 e.SortResult = v1 == v2 ? 0 : v1 < v2 ? -1 : 1;
             }
             else if (e.Column.Name is "AvgLatency" or "AvgDownSpeed" or "MaxDownSpeed" or "AvgUpSpeed" or "MaxUpSpeed" or "Upload" or "Download" or "DownloadRaw"
-                )
+                    )
             {
                 var s1 = Convert.ToString(e.CellValue1);
                 var s2 = Convert.ToString(e.CellValue2);

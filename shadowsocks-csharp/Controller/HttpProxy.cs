@@ -217,9 +217,9 @@ namespace Shadowsocks.Controller
             {
                 httpHost = ParseHostAndPort(header_dict["@1"], ref httpPort);
             }
-            else if (header_dict.ContainsKey("Host"))
+            else if (header_dict.TryGetValue("Host", out var value))
             {
-                httpHost = ParseHostAndPort(header_dict["Host"], ref httpPort);
+                httpHost = ParseHostAndPort(value, ref httpPort);
             }
             else
             {

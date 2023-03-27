@@ -187,9 +187,9 @@ namespace Shadowsocks.View
                     server_group[s.group] = 1;
                 }
             }
-            if (key != null && _modifiedConfiguration.portMap.ContainsKey(key))
+            if (key != null && _modifiedConfiguration.portMap.TryGetValue(key, out var value))
             {
-                var cfg = _modifiedConfiguration.portMap[key] as PortMapConfig;
+                var cfg = value as PortMapConfig;
 
                 checkEnable.Checked = cfg.enable;
                 comboBoxType.SelectedValue = cfg.type;

@@ -327,7 +327,7 @@ namespace Shadowsocks.Model
                 {
                     type = pm.type,
                     id = pm.id,
-                    server = id2server.ContainsKey(pm.id) ? id2server[pm.id] : null,
+                    server = id2server.TryGetValue(pm.id, out var value) ? value : null,
                     server_addr = pm.server_addr,
                     server_port = pm.server_port
                 };

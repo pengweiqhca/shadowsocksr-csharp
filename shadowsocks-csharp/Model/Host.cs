@@ -97,9 +97,9 @@ namespace Shadowsocks.Model
                     addr = node[parts[i]].addr;
                     return true;
                 }
-                if (node.ContainsKey("*"))
+                if (node.TryGetValue("*", out var value))
                 {
-                    addr = node["*"].addr;
+                    addr = value.addr;
                     return true;
                 }
                 if (node[parts[i]].subnode == null)

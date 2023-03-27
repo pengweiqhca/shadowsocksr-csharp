@@ -222,11 +222,11 @@ Connection: Close
                     }
                     if (params_dict["action"] == "config")
                     {
-                        if (params_dict.ContainsKey("config"))
+                        if (params_dict.TryGetValue("config", out var value))
                         {
                             var content = "";
                             var ret_code = "200 OK";
-                            if (!_controller.SaveServersConfig(params_dict["config"]))
+                            if (!_controller.SaveServersConfig(value))
                             {
                                 ret_code = "403 Forbid";
                             }

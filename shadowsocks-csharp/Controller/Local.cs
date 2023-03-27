@@ -392,54 +392,42 @@ namespace Shadowsocks.Controller
                 }
                 else if (se.SocketErrorCode == SocketError.HostNotFound)
                 {
-                    if (lastErrCode == 0)
+                    if (lastErrCode == 0 && s != null)
                     {
-                        if (s != null)
+                        lastErrCode = 2;
+                        s.ServerSpeedLog().AddErrorTimes();
+                        if (s.ServerSpeedLog().ErrorConnectTimes >= 3 && cfg.autoSwitchOff)
                         {
-                            lastErrCode = 2;
-                            s.ServerSpeedLog().AddErrorTimes();
-                            if (s.ServerSpeedLog().ErrorConnectTimes >= 3 && cfg.autoSwitchOff)
-                            {
-                                s.setEnable(false);
-                            }
+                            s.setEnable(false);
                         }
                     }
                     return 2; // ip not exist
                 }
                 else if (se.SocketErrorCode == SocketError.ConnectionRefused)
                 {
-                    if (lastErrCode == 0)
+                    if (lastErrCode == 0 && s != null)
                     {
-                        if (s != null)
-                        {
-                            lastErrCode = 1;
-                            if (cfg is { socks5RemotePort: 0 })
-                                s.ServerSpeedLog().AddErrorTimes();
-                        }
+                        lastErrCode = 1;
+                        if (cfg is { socks5RemotePort: 0 })
+                            s.ServerSpeedLog().AddErrorTimes();
                     }
                     return 2; // proxy ip/port error
                 }
                 else if (se.SocketErrorCode == SocketError.NetworkUnreachable)
                 {
-                    if (lastErrCode == 0)
+                    if (lastErrCode == 0 && s != null)
                     {
-                        if (s != null)
-                        {
-                            lastErrCode = 3;
-                            //s.ServerSpeedLog().AddErrorTimes();
-                        }
+                        lastErrCode = 3;
+                        //s.ServerSpeedLog().AddErrorTimes();
                     }
                     return 3; // proxy ip/port error
                 }
                 else if (se.SocketErrorCode == SocketError.TimedOut)
                 {
-                    if (lastErrCode == 0)
+                    if (lastErrCode == 0 && s != null)
                     {
-                        if (s != null)
-                        {
-                            lastErrCode = 8;
-                            s.ServerSpeedLog().AddTimeoutTimes();
-                        }
+                        lastErrCode = 8;
+                        s.ServerSpeedLog().AddTimeoutTimes();
                     }
                     return 8; // proxy server no response too slow
                 }
@@ -563,16 +551,7 @@ namespace Shadowsocks.Controller
                     remoteUDP.CreateEncryptor(server.method, server.password);
                     remoteUDP.SetProtocol(ObfsFactory.GetObfs(server.protocol));
                     remoteUDP.SetObfs(ObfsFactory.GetObfs(server.obfs));
-                    if (server.server_udp_port == 0 || cfg.socks5RemotePort != 0)
-                    {
-                        var _remoteEP = new IPEndPoint(ipAddress, serverPort);
-                        remoteUDP.SetUdpEndPoint(_remoteEP);
-                    }
-                    else
-                    {
-                        var _remoteEP = new IPEndPoint(ipAddress, server.server_udp_port);
-                        remoteUDP.SetUdpEndPoint(_remoteEP);
-                    }
+                    remoteUDP.SetUdpEndPoint(new IPEndPoint(ipAddress, server.server_udp_port == 0 || cfg.socks5RemotePort != 0 ? serverPort : server.server_udp_port));
                 }
                 catch (SocketException)
                 {
@@ -584,8 +563,7 @@ namespace Shadowsocks.Controller
             // Connect to the remote endpoint.
             if (cfg.socks5RemotePort == 0 && connectionUDP != null && !server.udp_over_tcp)
             {
-                var _state = State;
-                if (_state == ConnectState.CONNECTING)
+                if (State == ConnectState.CONNECTING)
                 {
                     StartPipe();
                 }
@@ -833,18 +811,15 @@ namespace Shadowsocks.Controller
                     server = getCurrentServer(localPort, null, cfg.targetHost, cfg.random, true, cfg.forceRandom);
                 }
             }
+            else if (cfg.targetHost == null)
+            {
+                cfg.targetHost = GetQueryString();
+                cfg.targetPort = GetQueryPort();
+                server = getCurrentServer(localPort, select_server, cfg.targetHost, true, true);
+            }
             else
             {
-                if (cfg.targetHost == null)
-                {
-                    cfg.targetHost = GetQueryString();
-                    cfg.targetPort = GetQueryPort();
-                    server = getCurrentServer(localPort, select_server, cfg.targetHost, true, true);
-                }
-                else
-                {
-                    server = getCurrentServer(localPort, select_server, cfg.targetHost, true, true, cfg.forceRandom);
-                }
+                server = getCurrentServer(localPort, select_server, cfg.targetHost, true, true, cfg.forceRandom);
             }
             speedTester.server = server.server;
             Logging.Info($"Connect {cfg.targetHost}:{cfg.targetPort} via {server.server}:{server.server_port}");
@@ -852,7 +827,6 @@ namespace Shadowsocks.Controller
             ResetTimeout(cfg.TTL);
             if (cfg.targetHost != null)
             {
-
                 var host = cfg.targetHost;
 
                 if (!IPAddress.TryParse(host, out var ipAddress))
@@ -896,48 +870,39 @@ namespace Shadowsocks.Controller
                     serverHost = cfg.socks5RemoteHost;
                     serverPort = cfg.socks5RemotePort;
                 }
-                var parsed = IPAddress.TryParse(serverHost, out var ipAddress);
-                if (!parsed)
+                if (!IPAddress.TryParse(serverHost, out var ipAddress))
                 {
                     if (server.ServerSpeedLog().ErrorContinurousTimes > 10)
                         server.DnsBuffer().force_expired = true;
                     if (server.DnsBuffer().isExpired(serverHost))
                     {
                         var dns_ok = false;
+                        
+                        var buf = server.DnsBuffer();
+                        if (Monitor.TryEnter(buf, buf.ip != null ? 100 : 1000000))
                         {
-                            var buf = server.DnsBuffer();
-                            if (Monitor.TryEnter(buf, buf.ip != null ? 100 : 1000000))
+                            if (buf.isExpired(serverHost))
                             {
-                                if (buf.isExpired(serverHost))
+                                ipAddress = Utils.QueryDns(serverHost, serverHost.Contains('.') ? cfg.local_dns_servers : null);
+                                if (ipAddress != null)
                                 {
-                                    if (serverHost.Contains('.'))
-                                    {
-                                        ipAddress = Utils.QueryDns(serverHost, cfg.local_dns_servers);
-                                    }
-                                    else
-                                    {
-                                        ipAddress = Utils.QueryDns(serverHost, null);
-                                    }
-                                    if (ipAddress != null)
-                                    {
-                                        buf.UpdateDns(serverHost, ipAddress);
-                                        dns_ok = true;
-                                    }
-                                }
-                                else
-                                {
-                                    ipAddress = buf.ip;
+                                    buf.UpdateDns(serverHost, ipAddress);
                                     dns_ok = true;
                                 }
-                                Monitor.Exit(buf);
                             }
                             else
                             {
-                                if (buf.ip != null)
-                                {
-                                    ipAddress = buf.ip;
-                                    dns_ok = true;
-                                }
+                                ipAddress = buf.ip;
+                                dns_ok = true;
+                            }
+                            Monitor.Exit(buf);
+                        }
+                        else
+                        {
+                            if (buf.ip != null)
+                            {
+                                ipAddress = buf.ip;
+                                dns_ok = true;
                             }
                         }
                         if (!dns_ok)

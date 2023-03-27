@@ -49,9 +49,9 @@ namespace ZXing.Common
         /// default encoding if none of these can possibly be correct</returns>
         public static string guessEncoding(byte[] bytes, IDictionary<DecodeHintType, object> hints)
         {
-            if (hints != null && hints.ContainsKey(DecodeHintType.CHARACTER_SET))
+            if (hints != null && hints.TryGetValue(DecodeHintType.CHARACTER_SET, out var hint))
             {
-                var characterSet = (string)hints[DecodeHintType.CHARACTER_SET];
+                var characterSet = (string)hint;
                 if (characterSet != null)
                 {
                     return characterSet;

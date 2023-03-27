@@ -1,18 +1,14 @@
 ﻿using Shadowsocks.Controller;
 using Microsoft.Win32;
 using Shadowsocks.Model;
-#if !_CONSOLE
 using Shadowsocks.View;
-#endif
 
 namespace Shadowsocks
 {
     static class Program
     {
         static ShadowsocksController _controller;
-#if !_CONSOLE
         static MenuViewController _viewController;
-#endif
 
         /// <summary>
         /// 应用程序的主入口点。
@@ -20,7 +16,6 @@ namespace Shadowsocks
         [STAThread]
         static void Main(string[] args)
         {
-#if !_CONSOLE
             foreach (var arg in args)
             {
                 if (arg == "--setautorun")
@@ -32,8 +27,12 @@ namespace Shadowsocks
                     return;
                 }
             }
+            
             using var mutex = new Mutex(false, $"Global\\ShadowsocksR_{Application.StartupPath.GetHashCode()}");
+            
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.ApplicationExit += Application_ApplicationExit;
             SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
@@ -45,10 +44,9 @@ namespace Shadowsocks
                     I18N.GetString("ShadowsocksR is already running."));
                 return;
             }
-#endif
+            
             Directory.SetCurrentDirectory(Application.StartupPath);
 
-#if !_CONSOLE
             var try_times = 0;
             while (Configuration.Load() == null)
             {
@@ -65,7 +63,6 @@ namespace Shadowsocks
             }
             if (try_times > 0)
                 Logging.save_to_file = false;
-#endif
 
             _controller = new ShadowsocksController();
             HostMap.Instance().LoadHostFile();
@@ -78,20 +75,11 @@ namespace Shadowsocks
             Logging.OpenLogFile();
             //#endif
 
-#if !_CONSOLE
             _viewController = new MenuViewController(_controller);
-#endif
 
             _controller.Start();
 
-#if !_CONSOLE
-            //Util.Utils.ReleaseMemory();
-
             Application.Run();
-#else
-            Console.ReadLine();
-            _controller.Stop();
-#endif
         }
 
         private static void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)

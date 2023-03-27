@@ -68,11 +68,7 @@ namespace Shadowsocks.Controller
                 }
                 if (File.Exists(USER_RULE_FILE))
                 {
-#if NETFRAMEWORK
-                    var local = File.ReadAllText(USER_RULE_FILE, Encoding.UTF8);
-#else
                     var local = await File.ReadAllTextAsync(USER_RULE_FILE, Encoding.UTF8);
-#endif
                     var rules = local.Split(new[]
                     {
                         '\r', '\n'
@@ -87,11 +83,7 @@ namespace Shadowsocks.Controller
                 var abpContent = gfwlist_template;
                 if (File.Exists(USER_ABP_FILE))
                 {
-#if NETFRAMEWORK
-                    abpContent = File.ReadAllText(USER_ABP_FILE, Encoding.UTF8);
-#else
                     abpContent = await File.ReadAllTextAsync(USER_ABP_FILE, Encoding.UTF8);
-#endif
                 }
                 else
                 {
@@ -100,11 +92,7 @@ namespace Shadowsocks.Controller
                 abpContent = abpContent.Replace("__RULES__", SimpleJson.SimpleJson.SerializeObject(lines));
                 if (File.Exists(PAC_FILE))
                 {
-#if NETFRAMEWORK
-                    var original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
-#else
                     var original = await File.ReadAllTextAsync(PAC_FILE, Encoding.UTF8);
-#endif
                     if (original == abpContent)
                     {
                         update_type = 0;
@@ -112,11 +100,9 @@ namespace Shadowsocks.Controller
                         return;
                     }
                 }
-#if NETFRAMEWORK
-                File.WriteAllText(PAC_FILE, abpContent, Encoding.UTF8);
-#else
+                
                 await File.WriteAllTextAsync(PAC_FILE, abpContent, Encoding.UTF8);
-#endif
+                
                 if (UpdateCompleted != null)
                 {
                     update_type = 0;
@@ -147,11 +133,8 @@ namespace Shadowsocks.Controller
 
                 if (File.Exists(PAC_FILE))
                 {
-#if NETFRAMEWORK
-                    var original = File.ReadAllText(PAC_FILE, Encoding.UTF8);
-#else
                     var original = await File.ReadAllTextAsync(PAC_FILE, Encoding.UTF8);
-#endif
+                    
                     if (original == content)
                     {
                         update_type = 1;
@@ -159,11 +142,9 @@ namespace Shadowsocks.Controller
                         return;
                     }
                 }
-#if NETFRAMEWORK
-                File.WriteAllText(PAC_FILE, content, Encoding.UTF8);
-#else
+                
                 await File.WriteAllTextAsync(PAC_FILE, content, Encoding.UTF8);
-#endif
+                
                 if (UpdateCompleted != null)
                 {
                     update_type = 1;

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <LangVersion>10.0</LangVersion>
-        <TargetFrameworks>net471;net6.0-windows</TargetFrameworks>
+        <TargetFramework>net6.0-windows</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>

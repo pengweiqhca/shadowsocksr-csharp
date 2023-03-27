@@ -96,9 +96,9 @@ namespace Shadowsocks.Encryption
             var cipher = EVP_get_cipherbyname(cipher_name_buf);
             if (cipher == IntPtr.Zero)
             {
-                if (encrypt_func_map != null && encrypt_func_map.ContainsKey(real_cipher_name))
+                if (encrypt_func_map != null && encrypt_func_map.TryGetValue(real_cipher_name, out var value))
                 {
-                    cipher = encrypt_func_map[real_cipher_name]();
+                    cipher = value();
                 }
             }
             if (cipher != IntPtr.Zero)
