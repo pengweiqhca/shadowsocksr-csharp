@@ -37,18 +37,7 @@ public class Utils
         GC.Collect(GC.MaxGeneration);
         GC.WaitForPendingFinalizers();
 
-        if (UIntPtr.Size == 4)
-        {
-            SetProcessWorkingSetSize(current_process.Handle,
-                (UIntPtr)0xFFFFFFFF,
-                (UIntPtr)0xFFFFFFFF);
-        }
-        else if (UIntPtr.Size == 8)
-        {
-            SetProcessWorkingSetSize(current_process.Handle,
-                (UIntPtr)0xFFFFFFFFFFFFFFFF,
-                (UIntPtr)0xFFFFFFFFFFFFFFFF);
-        }
+        SetProcessWorkingSetSize(current_process.Handle, UIntPtr.MaxValue, UIntPtr.MaxValue);
     }
 
     public static string UnGzip(byte[] buf)
@@ -411,7 +400,7 @@ public class Utils
         return ret_ipAddress;
     }
 
-    public static string GetExecutablePath() => System.Reflection.Assembly.GetExecutingAssembly().Location;
+    public static string GetExecutablePath() => Application.ExecutablePath;
 
     public static int RunAsAdmin(string Arguments)
     {
