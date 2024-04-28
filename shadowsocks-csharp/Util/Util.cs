@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace Shadowsocks.Util;
 
@@ -401,6 +402,9 @@ public class Utils
     }
 
     public static string GetExecutablePath() => Application.ExecutablePath;
+
+    public static string GetStartupPathHash() =>
+        $"ShadowsocksR_{Convert.ToBase64String(MD5.HashData(Encoding.UTF8.GetBytes(Application.StartupPath))[..6])}";
 
     public static int RunAsAdmin(string Arguments)
     {

@@ -25,7 +25,7 @@ internal static class Program
             return;
         }
 
-        using var mutex = new Mutex(false, $"Global\\ShadowsocksR_{Application.StartupPath.GetHashCode()}");
+        using var mutex = new Mutex(false, $"Global\\{Util.Utils.GetStartupPathHash()}");
 
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 

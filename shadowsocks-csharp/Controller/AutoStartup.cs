@@ -6,7 +6,7 @@ namespace Shadowsocks.Controller;
 
 internal class AutoStartup
 {
-    private static readonly string Key = $"ShadowsocksR_{Application.StartupPath.GetHashCode()}";
+    private static readonly string Key = Util.Utils.GetStartupPathHash();
     private static readonly string RegistryRunPath = IntPtr.Size == 4 ? @"Software\Microsoft\Windows\CurrentVersion\Run" : @"SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run";
 
     public static bool Set(bool enabled)
