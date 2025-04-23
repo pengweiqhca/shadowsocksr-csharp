@@ -401,7 +401,8 @@ public class Utils
         return ret_ipAddress;
     }
 
-    public static string GetExecutablePath() => Application.ExecutablePath;
+    public static string GetExecutablePath() =>
+        Process.GetCurrentProcess().MainModule?.FileName ?? Application.ExecutablePath;
 
     public static string GetStartupPathHash() =>
         $"ShadowsocksR_{Convert.ToBase64String(MD5.HashData(Encoding.UTF8.GetBytes(Application.StartupPath))[..6])}";
@@ -412,7 +413,7 @@ public class Utils
         var processInfo = new ProcessStartInfo
         {
             Verb = "runas",
-            FileName = Application.ExecutablePath,
+            FileName = GetExecutablePath(),
             Arguments = Arguments
         };
         try
