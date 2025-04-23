@@ -3,9 +3,9 @@
     <PropertyGroup>
         <RootNamespace>Shadowsocks</RootNamespace>
         <AssemblyName>ShadowsocksR</AssemblyName>
-        <TargetFramework>net6.0-windows</TargetFramework>
+        <TargetFramework>net8.0-windows</TargetFramework>
         <OutputType>WinExe</OutputType>
-        <LangVersion>10.0</LangVersion>
+        <LangVersion>latest</LangVersion>
         <ApplicationIcon>shadowsocks.ico</ApplicationIcon>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
