@@ -412,6 +412,7 @@ public class Utils
         Process process = null;
         var processInfo = new ProcessStartInfo
         {
+            UseShellExecute = true,
             Verb = "runas",
             FileName = GetExecutablePath(),
             Arguments = Arguments
@@ -424,7 +425,9 @@ public class Utils
         {
             return -1;
         }
-        process?.WaitForExit();
+
+        if (process == null) return -1;
+        process.WaitForExit();
         var ret = process.ExitCode;
         process.Close();
         return ret;
